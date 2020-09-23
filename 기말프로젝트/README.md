@@ -4,6 +4,7 @@
 W,A,S,D,SPACE,마우스를 이용하여 조작하며 **아이템**을 획득해가며 던전 깊숙한 곳으로 내려갑니다.
 
 ## GAMESTATE
+GAMESTATE에는 ```LOGO_STATE``` ```TITLE_STATE``` ```SCORE_STATE``` ```INGAME_STATE``` ```GAMEOVER_STATE``` ```HIGHSCORE_STATE``` 로 총 6가지의 상태가 있습니다.
 
 ```LOGO_STATE```
 처음 실행했을 때 잠깐 보이는 화면으로 몇 초 후 자동으로 ```TITLE_STATE```로 넘어갑니다.
