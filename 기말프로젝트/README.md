@@ -1,7 +1,8 @@
 ## INTRODUCE
 
-```Go2DePths``` 는 여러가지 방해와 장애물들을 해쳐나가며 **하염없이 밑으로 내려가는 게임**입니다.
-W,A,S,D,SPACE,마우스를 이용하여 조작하며 **아이템**을 획득해가며 던전 깊숙한 곳으로 내려갑니다.
+```Go2DePths``` 에서 당신은 용기가 넘치며 모험심 뛰어난 모험가입니다. 당신은 깊은 곳으로 내려가면서 여러 아이템들을 획득하고 많은 방해와 장애물들을 해쳐나가며 무언가를 찾기위해 **하염없이 밑으로** 내려가게됩니다.
+
+> W,A,S,D,SPACE와 마우스를 이용하여 캐릭터와 상호작용합니다.
 
 ## GAMESTATE
 GAMESTATE에는 ```LOGO_STATE``` ```TITLE_STATE``` ```SCORE_STATE``` ```INGAME_STATE``` ```GAMEOVER_STATE``` ```HIGHSCORE_STATE``` 로 총 6가지의 상태가 있습니다.
