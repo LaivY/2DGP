@@ -40,52 +40,62 @@ class Character:
 
     def draw(self):
         # 점프
-        if self.state2 is 'jump' or self.state2 is 'jump2':
-            if self.dir is 'RIGHT':
+        if self.state2 == 'jump' or self.state2 == 'jump2':
+            if self.dir == 'RIGHT':
                 self.image.clip_draw(self.frame2 // 5 % 7 * 50, 37 * 13 - (self.frame2 // 5 // 7 * 37), 50, 37, self.x, self.y)
-            elif self.dir is 'LEFT':
+            elif self.dir == 'LEFT':
                 self.image.clip_composite_draw(self.frame2 // 5 % 7 * 50, 37 * 13 - (self.frame2 // 5 // 7 * 37), 50, 37, 0, 'h', self.x, self.y, 50, 37)
         # 대기
-        elif self.state is 'idle':
-            if self.dir is 'RIGHT':
+        elif self.state == 'idle':
+            if self.dir == 'RIGHT':
                 self.image.clip_draw(self.frame // MOTION_DELAY['idle'] * 50, 555, 50, 37, self.x, self.y)
-            elif self.dir is 'LEFT':
+            elif self.dir == 'LEFT':
                 self.image.clip_composite_draw(self.frame // MOTION_DELAY['idle'] * 50, 37 * 15, 50, 37, 0, 'h', self.x, self.y, 50, 37)
         # 달리기
-        elif self.state is 'run':
-            if self.dir is 'RIGHT':
+        elif self.state == 'run':
+            if self.dir == 'RIGHT':
                 self.image.clip_draw(self.frame // MOTION_DELAY['run'] * 50 + 50, 37 * 14, 50, 37, self.x, self.y)
-            elif self.dir is 'LEFT':
+            elif self.dir == 'LEFT':
                 self.image.clip_composite_draw(self.frame // MOTION_DELAY['run'] * 50 + 50, 37 * 14, 50, 37, 0, 'h', self.x, self.y, 50, 37)
         # 일반공격1
-        elif self.state is 'attack1':
-            if self.dir is 'RIGHT':
+        elif self.state == 'attack1':
+            if self.dir == 'RIGHT':
                 self.image.clip_draw(self.frame // MOTION_DELAY['attack1'] * 50, 37 * 9, 50, 37, self.x, self.y)
             elif self.dir == 'LEFT':
                 self.image.clip_composite_draw(self.frame // MOTION_DELAY['attack1'] * 50, 37 * 9, 50, 37, 0, 'h', self.x, self.y, 50, 37)
         # 일반공격2
-        elif self.state is 'attack2':
-            if self.dir is 'RIGHT':
+        elif self.state == 'attack2':
+            if self.dir == 'RIGHT':
                 if self.frame // MOTION_DELAY['attack2'] < 4:
                     self.image.clip_draw(self.frame // MOTION_DELAY['attack2'] * 50 + 50 * 3, 37 * 9, 50, 37, self.x, self.y)
                 else:
                     self.image.clip_draw((self.frame // MOTION_DELAY['attack2'] - 4) * 50, 37 * 8, 50, 37, self.x, self.y)
+            elif self.dir == 'LEFT':
+                if self.frame // MOTION_DELAY['attack2'] < 4:
+                    self.image.clip_composite_draw(self.frame // MOTION_DELAY['attack2'] * 50 + 50 * 3, 37 * 9, 50, 37, 0, 'h', self.x, self.y, 50, 37)
+                else:
+                    self.image.clip_composite_draw((self.frame // MOTION_DELAY['attack2'] - 4) * 50, 37 * 8, 50, 37, 0, 'h', self.x, self.y, 50, 37)
         # 일반공격3
-        elif self.state is 'attack3':
-            if self.dir is 'RIGHT':
+        elif self.state == 'attack3':
+            if self.dir == 'RIGHT':
                 if self.frame // MOTION_DELAY['attack3'] < 3:
                     self.image.clip_draw(self.frame // MOTION_DELAY['attack3'] * 50 + 50 * 4, 37 * 8, 50, 37, self.x, self.y)
                 else:
                     self.image.clip_draw((self.frame // MOTION_DELAY['attack3'] - 3) * 50, 37 * 7, 50, 37, self.x, self.y)
+            elif self.dir == 'LEFT':
+                if self.frame // MOTION_DELAY['attack3'] < 3:
+                    self.image.clip_composite_draw(self.frame // MOTION_DELAY['attack3'] * 50 + 50 * 4, 37 * 8, 50, 37, 0, 'h', self.x, self.y, 50, 37)
+                else:
+                    self.image.clip_composite_draw((self.frame // MOTION_DELAY['attack3'] - 3) * 50, 37 * 7, 50, 37, 0, 'h', self.x, self.y, 50, 37)
 
     def update(self, delta_time):
         # 대기
-        if self.state is 'idle':
-            if self.rightKeyDown is True:
+        if self.state == 'idle':
+            if self.rightKeyDown:
                 self.dir = 'RIGHT'
                 self.state = 'run'
                 self.dx = 2
-            elif self.leftKeyDown is True:
+            elif self.leftKeyDown:
                 self.dir = 'LEFT'
                 self.state = 'run'
                 self.dx = -2
@@ -95,13 +105,13 @@ class Character:
                     self.frame = 0
 
         # 달리기
-        elif self.state is 'run':
+        elif self.state == 'run':
             self.frame += 1
             if self.frame >= MOTION_FRAME['run'] * MOTION_DELAY['run']:
                 self.frame = 0
 
         # 점프
-        if self.state2 is 'jump' or self.state2 is 'jump2':
+        if self.state2 == 'jump' or self.state2 == 'jump2':
             self.frame2 += 1
 
             # update Cycle
@@ -122,17 +132,17 @@ class Character:
                 self.y = 100
 
         # 공격
-        if self.state is 'attack1':
+        if self.state == 'attack1':
             self.frame += 1
             if self.frame >= MOTION_FRAME['attack1'] * MOTION_DELAY['attack1']:
                 self.frame = 0
                 self.state = 'idle'
-        elif self.state is 'attack2':
+        elif self.state == 'attack2':
             self.frame += 1
             if self.frame >= MOTION_FRAME['attack2'] * MOTION_DELAY['attack2']:
                 self.frame = 0
                 self.state = 'idle'
-        elif self.state is 'attack3':
+        elif self.state == 'attack3':
             self.frame += 1
             if self.frame >= MOTION_FRAME['attack3'] * MOTION_DELAY['attack3']:
                 self.frame = 0
