@@ -1,6 +1,26 @@
 from pico2d import *
 PATH = 'res/'
 
+# 모션별 딜레이
+MOTION_DELAY = {
+    'idle': 15,
+    'run': 10,
+    'jump': 5,
+    'attack1': 12,
+    'attack2': 10,
+    'attack3': 10
+}
+
+# 모션별 프레임 수
+MOTION_FRAME = {
+    'idle': 4,
+    'run': 6,
+    'jump': 10,
+    'attack1': 3,
+    'attack2': 8,
+    'attack3': 6
+}
+
 class Character:
     # 50x37
     def __init__(self):
@@ -19,40 +39,44 @@ class Character:
         self.image = load_image(PATH + 'adventurer-v1.5-Sheet.png')
 
     def draw(self):
-        if self.state2 is 'none':
-            if self.state is 'idle':
-                if self.dir is 'RIGHT':
-                    self.image.clip_draw(self.frame // 15 * 50, 555, 50, 37, self.x, self.y)
-                elif self.dir is 'LEFT':
-                    self.image.clip_composite_draw(self.frame // 15 * 50, 37 * 15, 50, 37, 0, 'h', self.x, self.y, 50, 37)
-            elif self.state is 'run':
-                if self.dir is 'RIGHT':
-                    self.image.clip_draw(self.frame // 10 * 50 + 50, 37 * 14, 50, 37, self.x, self.y)
-                elif self.dir is 'LEFT':
-                    self.image.clip_composite_draw(self.frame // 10 * 50 + 50, 37 * 14, 50, 37, 0, 'h', self.x, self.y, 50, 37)
-            elif self.state is 'attack1':
-                if self.dir is 'RIGHT':
-                    self.image.clip_draw(self.frame // 20 * 50, 37 * 9, 50, 37, self.x, self.y)
-                elif self.dir == 'LEFT':
-                    self.image.clip_composite_draw(self.frame // 20 * 50, 37 * 9, 50, 37, 0, 'h', self.x, self.y, 50, 37)
-            elif self.state is 'attack2':
-                if self.dir is 'RIGHT':
-                    if self.frame // 15 < 4:
-                        self.image.clip_draw(self.frame // 15 * 50 + 50 * 3, 37 * 9, 50, 37, self.x, self.y)
-                    else:
-                        self.image.clip_draw((self.frame // 15 - 4) * 50, 37 * 8, 50, 37, self.x, self.y)
-
-        else:
-            if self.state2 is 'jump':
-                if self.dir is 'RIGHT':
-                    self.image.clip_draw(self.frame2 // 5 % 7 * 50, 37 * 13 - (self.frame2 // 5 // 7 * 37), 50, 37, self.x, self.y)
-                elif self.dir is 'LEFT':
-                    self.image.clip_composite_draw(self.frame2 // 5 % 7 * 50, 37 * 13 - (self.frame2 // 5 // 7 * 37), 50, 37, 0, 'h', self.x, self.y, 50, 37)
-            elif self.state2 is 'jump2':
-                if self.dir is 'RIGHT':
-                    self.image.clip_draw(self.frame2 // 5 % 7 * 50, 37 * 13 - (self.frame2 // 5 // 7 * 37), 50, 37, self.x, self.y)
-                elif self.dir is 'LEFT':
-                    self.image.clip_composite_draw(self.frame2 // 5 % 7 * 50, 37 * 13 - (self.frame2 // 5 // 7 * 37), 50, 37, 0, 'h', self.x, self.y, 50, 37)
+        # 점프
+        if self.state2 is 'jump' or self.state2 is 'jump2':
+            if self.dir is 'RIGHT':
+                self.image.clip_draw(self.frame2 // 5 % 7 * 50, 37 * 13 - (self.frame2 // 5 // 7 * 37), 50, 37, self.x, self.y)
+            elif self.dir is 'LEFT':
+                self.image.clip_composite_draw(self.frame2 // 5 % 7 * 50, 37 * 13 - (self.frame2 // 5 // 7 * 37), 50, 37, 0, 'h', self.x, self.y, 50, 37)
+        # 대기
+        elif self.state is 'idle':
+            if self.dir is 'RIGHT':
+                self.image.clip_draw(self.frame // MOTION_DELAY['idle'] * 50, 555, 50, 37, self.x, self.y)
+            elif self.dir is 'LEFT':
+                self.image.clip_composite_draw(self.frame // MOTION_DELAY['idle'] * 50, 37 * 15, 50, 37, 0, 'h', self.x, self.y, 50, 37)
+        # 달리기
+        elif self.state is 'run':
+            if self.dir is 'RIGHT':
+                self.image.clip_draw(self.frame // MOTION_DELAY['run'] * 50 + 50, 37 * 14, 50, 37, self.x, self.y)
+            elif self.dir is 'LEFT':
+                self.image.clip_composite_draw(self.frame // MOTION_DELAY['run'] * 50 + 50, 37 * 14, 50, 37, 0, 'h', self.x, self.y, 50, 37)
+        # 일반공격1
+        elif self.state is 'attack1':
+            if self.dir is 'RIGHT':
+                self.image.clip_draw(self.frame // MOTION_DELAY['attack1'] * 50, 37 * 9, 50, 37, self.x, self.y)
+            elif self.dir == 'LEFT':
+                self.image.clip_composite_draw(self.frame // MOTION_DELAY['attack1'] * 50, 37 * 9, 50, 37, 0, 'h', self.x, self.y, 50, 37)
+        # 일반공격2
+        elif self.state is 'attack2':
+            if self.dir is 'RIGHT':
+                if self.frame // MOTION_DELAY['attack2'] < 4:
+                    self.image.clip_draw(self.frame // MOTION_DELAY['attack2'] * 50 + 50 * 3, 37 * 9, 50, 37, self.x, self.y)
+                else:
+                    self.image.clip_draw((self.frame // MOTION_DELAY['attack2'] - 4) * 50, 37 * 8, 50, 37, self.x, self.y)
+        # 일반공격3
+        elif self.state is 'attack3':
+            if self.dir is 'RIGHT':
+                if self.frame // MOTION_DELAY['attack3'] < 3:
+                    self.image.clip_draw(self.frame // MOTION_DELAY['attack3'] * 50 + 50 * 4, 37 * 8, 50, 37, self.x, self.y)
+                else:
+                    self.image.clip_draw((self.frame // MOTION_DELAY['attack3'] - 3) * 50, 37 * 7, 50, 37, self.x, self.y)
 
     def update(self, delta_time):
         # 대기
@@ -67,17 +91,17 @@ class Character:
                 self.dx = -2
             else:
                 self.frame += 1
-                if self.frame >= 4 * 15:
+                if self.frame >= MOTION_FRAME['idle'] * MOTION_DELAY['idle']:
                     self.frame = 0
 
         # 달리기
         elif self.state is 'run':
             self.frame += 1
-            if self.frame >= 6 * 10:
+            if self.frame >= MOTION_FRAME['run'] * MOTION_DELAY['run']:
                 self.frame = 0
 
         # 점프
-        if self.state2 is 'jump' or 'jump2':
+        if self.state2 is 'jump' or self.state2 is 'jump2':
             self.frame2 += 1
 
             # update Cycle
@@ -87,8 +111,8 @@ class Character:
                 self.timer = 0
 
             # Frame Fix
-            if self.frame2 > 9 * 5:
-                self.frame2 = 9 * 5
+            if self.frame2 > (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']:
+                self.frame2 = (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']
 
             # Landing Check
             if self.y + self.dy < 100:
@@ -100,12 +124,17 @@ class Character:
         # 공격
         if self.state is 'attack1':
             self.frame += 1
-            if self.frame >= 3 * 20:
+            if self.frame >= MOTION_FRAME['attack1'] * MOTION_DELAY['attack1']:
                 self.frame = 0
                 self.state = 'idle'
         elif self.state is 'attack2':
             self.frame += 1
-            if self.frame >= 8 * 15:
+            if self.frame >= MOTION_FRAME['attack2'] * MOTION_DELAY['attack2']:
+                self.frame = 0
+                self.state = 'idle'
+        elif self.state is 'attack3':
+            self.frame += 1
+            if self.frame >= MOTION_FRAME['attack3'] * MOTION_DELAY['attack3']:
                 self.frame = 0
                 self.state = 'idle'
 
@@ -155,15 +184,23 @@ class Character:
             self.dy = 5
 
         # 기본공격 1타
-        if (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state != 'attack1' and self.state2 != 'jump' and self.state2 != 'jump2':
+        if (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state != 'attack1' and self.state != 'attack2' and self.state != 'attack3' \
+                                                    and self.state2 != 'jump' and self.state2 != 'jump2':
             self.state = 'attack1'
             self.frame = 0
             self.timer = 0
             self.dx = 0
 
         # 기본공격 2타
-        elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state == 'attack1' and 25 <= self.frame:
+        elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state == 'attack1' and self.frame >= (MOTION_FRAME['attack1'] - 2) * MOTION_DELAY['attack1']:
             self.state = 'attack2'
+            self.frame = 0
+            self.timer = 0
+            self.dx = 0
+
+        # 기본공격 3타
+        elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state == 'attack2' and self.frame >= (MOTION_FRAME['attack2'] - 2) * MOTION_DELAY['attack2']:
+            self.state = 'attack3'
             self.frame = 0
             self.timer = 0
             self.dx = 0
