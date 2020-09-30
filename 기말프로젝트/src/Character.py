@@ -8,7 +8,7 @@ map = Map()
 MOTION_DELAY = {
     'idle': 15,
     'run': 10,
-    'jump': 4,
+    'jump': 6,
     'attack1': 12,
     'attack2': 10,
     'attack3': 10
@@ -31,10 +31,9 @@ class Character:
         self.leftKeyDown = False
         self.rightKeyDown = False
 
-        self.state = 'idle'             # 상태
-        self.state2 = 'none'            # 2번째 상태
+        self.state = 'idle'             # 상태1
+        self.state2 = 'none'            # 상태2
         self.frame = 0                  # 프레임
-        self.frame2 = 0                 # 2번째 프레임
         self.timer = 0                  # 점프 최신화 주기
         self.dir = 'RIGHT'              # 좌우
         self.x, self.y = 400, 100       # 좌표
@@ -45,9 +44,9 @@ class Character:
         # 점프
         if self.state2 == 'jump' or self.state2 == 'jump2':
             if self.dir == 'RIGHT':
-                self.image.clip_draw(self.frame2 // MOTION_DELAY['jump'] % 7 * 50, 37 * 13 - (self.frame2 // MOTION_DELAY['jump'] // 7 * 37), 50, 37, self.x, self.y)
+                self.image.clip_draw(self.frame // MOTION_DELAY['jump'] % 7 * 50, 37 * 13 - (self.frame // MOTION_DELAY['jump'] // 7 * 37), 50, 37, self.x, self.y)
             elif self.dir == 'LEFT':
-                self.image.clip_composite_draw(self.frame2 // MOTION_DELAY['jump'] % 7 * 50, 37 * 13 - (self.frame2 // MOTION_DELAY['jump'] // 7 * 37), 50, 37,
+                self.image.clip_composite_draw(self.frame // MOTION_DELAY['jump'] % 7 * 50, 37 * 13 - (self.frame // MOTION_DELAY['jump'] // 7 * 37), 50, 37,
                                                0, 'h', self.x, self.y, 50, 37)
         # 대기
         elif self.state == 'idle':
@@ -102,7 +101,7 @@ class Character:
     def update(self, delta_time):
         # 점프
         if self.state2 == 'jump' or self.state2 == 'jump2':
-            self.frame2 += 1
+            self.frame += 1
 
             # update Cycle
             self.timer += delta_time
@@ -111,14 +110,14 @@ class Character:
                 self.timer = 0
 
             # Frame Fix
-            if self.frame2 > (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']:
-                self.frame2 = (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']
+            if self.frame > (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']:
+                self.frame = (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']
 
             # Landing Check
             isLanded = map.isLanded(self.x, self.y, self.dy)
             if isLanded[0]:
                 self.state2 = 'none'
-                self.frame2 = 0
+                self.frame = 0
                 self.dy = 0
                 self.y = isLanded[1]
 
@@ -147,7 +146,7 @@ class Character:
             isLanded = map.isLanded(self.x, self.y, self.dy)
             if not isLanded[0]:
                 self.state2 = 'jump'
-                self.frame2 = 0
+                self.frame = 0
 
         # 공격
         elif self.state == 'attack1':
@@ -174,7 +173,7 @@ class Character:
         # 점프
         if (e.key, e.type) == (SDLK_c, SDL_KEYDOWN) and self.state2 != 'jump' and self.state2 != 'jump2':
             self.state2 = 'jump'
-            self.frame2 = 0
+            self.frame = 0
             self.timer = 0
             self.y += 10
             self.dy = 6
@@ -182,13 +181,13 @@ class Character:
         # 더블점프
         elif (e.key, e.type) == (SDLK_c, SDL_KEYDOWN) and self.state2 == 'jump':
             self.state2 = 'jump2'
-            self.frame2 = 0
+            self.frame = 0
             self.timer = 0
             self.y += 5
             self.dy = 5
 
         # 왼쪽 달리기
-        if (e.key, e.type) == (SDLK_LEFT, SDL_KEYDOWN):
+        elif (e.key, e.type) == (SDLK_LEFT, SDL_KEYDOWN):
             self.leftKeyDown = True
             if self.state != 'attack1':
                 self.dir = 'LEFT'
@@ -201,7 +200,7 @@ class Character:
                 self.dx = 0
 
         # 오른쪽 달리기
-        if (e.key, e.type) == (SDLK_RIGHT, SDL_KEYDOWN):
+        elif (e.key, e.type) == (SDLK_RIGHT, SDL_KEYDOWN):
             self.rightKeyDown = True
             if self.state != 'attack1':
                 self.dir = 'RIGHT'
@@ -214,7 +213,7 @@ class Character:
                 self.dx = 0
 
         # 기본공격 1타
-        if (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state != 'attack1' and self.state != 'attack2' and self.state != 'attack3' \
+        elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state != 'attack1' and self.state != 'attack2' and self.state != 'attack3' \
                                                     and self.state2 != 'jump' and self.state2 != 'jump2':
             self.state = 'attack1'
             self.frame = 0
