@@ -1,7 +1,7 @@
 from pico2d import *
 from Map import Map
 
-PATH = '.../res/'
+PATH = '../res/'
 map = Map()
 
 # 모션별 딜레이
