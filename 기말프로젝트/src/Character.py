@@ -8,10 +8,12 @@ map = Map()
 MOTION_DELAY = {
     'idle': 15,
     'run': 10,
-    'jump': 6,
-    'attack1': 12,
+    'jump': 4,
+    'attack1': 15,
     'attack2': 10,
-    'attack3': 10
+    'attack3': 10,
+    'air_attack1' : 5,
+    'air_attack2' : 10
 }
 
 # 모션별 프레임 수
@@ -21,7 +23,9 @@ MOTION_FRAME = {
     'jump': 10,
     'attack1': 3,
     'attack2': 8,
-    'attack3': 6
+    'attack3': 6,
+    'air_attack1' : 4,
+    'air_attack2' : 4
 }
 
 class Character:
@@ -98,29 +102,20 @@ class Character:
                     self.image.clip_composite_draw((self.frame // MOTION_DELAY['attack3'] - 3) * 50, 37 * 7, 50, 37,
                                                    0, 'h', self.x, self.y, 50, 37)
 
+        # 공중공격
+        elif self.state == 'air_attack1':
+            if self.dir == 'RIGHT':
+                if self.frame // MOTION_DELAY['air_attack1'] < 3:
+                    self.image.clip_draw(self.frame // MOTION_DELAY['air_attack1'] * 50 + 50 * 4, 37, 50, 37, self.x, self.y)
+                else:
+                    self.image.clip_draw((self.frame // MOTION_DELAY['air_attack1'] - 3) * 50, 0, 50, 37, self.x, self.y)
+
+        # 공중공격 마무리
+        elif self.state == 'air_attack2':
+            if self.dir == 'RIGHT':
+                self.image.clip_draw(self.frame // MOTION_DELAY['air_attack2'] * 50, 0, 50, 37, self.x, self.y)
+
     def update(self, delta_time):
-        # 점프
-        if self.state2 == 'jump' or self.state2 == 'jump2':
-            self.frame += 1
-
-            # update Cycle
-            self.timer += delta_time
-            if self.timer > 0.08:
-                self.dy -= 2
-                self.timer = 0
-
-            # Frame Fix
-            if self.frame > (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']:
-                self.frame = (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']
-
-            # Landing Check
-            isLanded = map.isLanded(self.x, self.y, self.dy)
-            if isLanded[0]:
-                self.state2 = 'none'
-                self.frame = 0
-                self.dy = 0
-                self.y = isLanded[1]
-
         # 대기
         if self.state == 'idle':
             if self.rightKeyDown:
@@ -132,13 +127,16 @@ class Character:
                 self.state = 'run'
                 self.dx = -2
             else:
-                self.frame += 1
+                # If it doesn't exist, frame goes up twice when I jump.
+                if self.state2 == 'none':
+                    self.frame += 1
                 if self.frame >= MOTION_FRAME['idle'] * MOTION_DELAY['idle']:
                     self.frame = 0
 
         # 달리기
         elif self.state == 'run' and self.state2 == 'none':
             self.frame += 1
+
             if self.frame >= MOTION_FRAME['run'] * MOTION_DELAY['run']:
                 self.frame = 0
 
@@ -165,13 +163,59 @@ class Character:
                 self.frame = 0
                 self.state = 'idle'
 
+        # 공중공격
+        elif self.state == 'air_attack1':
+            self.frame += 1
+            self.dy = -5
+
+            # Frame Repeat
+            if self.frame >= (MOTION_FRAME['air_attack1'] - 1) * MOTION_DELAY['air_attack1']:
+                self.frame = MOTION_DELAY['air_attack1']
+
+            # Landing Check
+            isLanded = map.isLanded(self.x, self.y, self.dy)
+            if isLanded[0]:
+                self.state = 'air_attack2'
+                self.frame = 0
+                self.dy = 0
+                self.y = isLanded[1]
+
+        elif self.state == 'air_attack2':
+            self.frame += 1
+            if self.frame >= MOTION_FRAME['air_attack2'] * MOTION_DELAY['air_attack2']:
+                self.state = 'idle'
+                self.frame = 0
+
+        # 점프
+        if self.state2 == 'jump' or self.state2 == 'jump2':
+            self.frame += 1
+
+            # update Cycle
+            self.timer += delta_time
+            if self.timer > 0.08:
+                self.dy -= 2
+                self.timer = 0
+
+            # Frame Fix
+            if self.frame > (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']:
+                self.frame = (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']
+
+            # Landing Check
+            isLanded = map.isLanded(self.x, self.y, self.dy)
+            if isLanded[0]:
+                self.state = 'idle'
+                self.state2 = 'none'
+                self.frame = 0
+                self.dy = 0
+                self.y = isLanded[1]
+
         # Chr Pos Update
         self.x += self.dx
         self.y += self.dy
 
     def eventHandler(self, e):
         # 점프
-        if (e.key, e.type) == (SDLK_c, SDL_KEYDOWN) and self.state2 != 'jump' and self.state2 != 'jump2':
+        if (e.key, e.type) == (SDLK_c, SDL_KEYDOWN) and (self.state == 'idle' or self.state == 'run') and self.state2 == 'none':
             self.state2 = 'jump'
             self.frame = 0
             self.timer = 0
@@ -193,6 +237,7 @@ class Character:
                 self.dir = 'LEFT'
                 self.state = 'run'
                 self.dx = -2
+
         elif (e.key, e.type) == (SDLK_LEFT, SDL_KEYUP):
             self.leftKeyDown = False
             if self.state != 'attack1' and self.state != 'attack2' and self.state != 'attack3':
@@ -206,6 +251,7 @@ class Character:
                 self.dir = 'RIGHT'
                 self.state = 'run'
                 self.dx = 2
+
         elif (e.key, e.type) == (SDLK_RIGHT, SDL_KEYUP):
             self.rightKeyDown = False
             if self.state != 'attack1' and self.state != 'attack2' and self.state != 'attack3':
@@ -213,20 +259,24 @@ class Character:
                 self.dx = 0
 
         # 기본공격 1타
-        elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state != 'attack1' and self.state != 'attack2' and self.state != 'attack3' \
-                                                    and self.state2 != 'jump' and self.state2 != 'jump2':
+        elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state != 'attack1' and self.state != 'attack2' and self.state != 'attack3' and self.state2 == 'none':
             self.state = 'attack1'
             self.frame = 0
             self.dx = 0
 
         # 기본공격 2타
-        elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state == 'attack1' and self.frame >= (MOTION_FRAME['attack1'] - 1.5) * MOTION_DELAY['attack1']:
+        elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state == 'attack1' and self.frame >= (MOTION_FRAME['attack1'] - 0.8) * MOTION_DELAY['attack1']:
             self.state = 'attack2'
             self.frame = 0
-            self.dx = 0
 
         # 기본공격 3타
         elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state == 'attack2' and self.frame >= (MOTION_FRAME['attack2'] - 2) * MOTION_DELAY['attack2']:
             self.state = 'attack3'
             self.frame = 0
-            self.dx = 0
+
+        # 공중공격 1타
+        elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and (self.state2 == 'jump' or self.state2 == 'jump2'):
+            self.state = 'air_attack1'
+            self.state2 = 'none'
+            self.frame = 0
+            self.dy = 4
