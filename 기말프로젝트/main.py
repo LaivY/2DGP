@@ -1,10 +1,12 @@
 import time
 from pico2d import *
 from Character import Character
+from Map import Map
 
 # Resource Path
 PATH = 'res/'
 open_canvas()
+
 
 def eventHandler():
     global running
@@ -15,10 +17,13 @@ def eventHandler():
         # 캐릭터 이벤트처리
         c.eventHandler(e)
 
+
+# setting
+m = Map()
 c = Character()
+
 delta_time = 0
 last_time = 0
-
 running = True
 
 while running:
@@ -35,6 +40,9 @@ while running:
     # 캐릭터
     c.update(delta_time)
     c.draw()
+
+    # 맵
+    m.draw()
 
     update_canvas()
     delay(0.01)
