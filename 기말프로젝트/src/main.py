@@ -4,7 +4,7 @@ from Character import Character
 from Map import Map
 
 # Resource Path
-PATH = 'res/'
+PATH = '.../res/'
 open_canvas()
 
 
