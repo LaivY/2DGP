@@ -1,7 +1,7 @@
 from pico2d import *
 
 # Map Resource Path
-PATH = '.../res/'
+PATH = '../res/'
 
 class Map:
     map = 0
