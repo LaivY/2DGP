@@ -37,12 +37,12 @@ while running:
     # 이벤트처리
     eventHandler()
 
+    # 맵
+    m.draw()
+
     # 캐릭터
     c.update(delta_time)
     c.draw()
-
-    # 맵
-    m.draw()
 
     update_canvas()
     delay(0.01)
