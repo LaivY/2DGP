@@ -24,8 +24,21 @@ MOTION_FRAME = {
     'attack1': 3,
     'attack2': 8,
     'attack3': 6,
-    'air_attack1' : 4,
-    'air_attack2' : 4
+    'air_attack1': 4,
+    'air_attack2': 4
+}
+
+# 모션별 히트박스
+MOTION_HITBOX = {
+    'idle': (6, 37 / 2 - 7, -5, -37 / 2),
+    'run': (0, 37 / 2 - 7, -11, -37 / 2),
+    'jump': (5, 5, -7, -9),
+    'jump2': (5, 5, -7, -9),
+    'attack1': (5, 37 / 2 - 15, -5, -37 / 2),
+    'attack2': (5, 37 / 2 - 13, -5, -37 / 2),
+    'attack3': (5, 37 / 2 - 13, -5, -37 / 2),
+    'air_attack1': (8, 37 / 2 - 15, -2, -37 / 2),
+    'air_attack2': (5, 37 / 2 - 13, -5, -37 / 2)
 }
 
 # 달리기 입력 무시
@@ -49,16 +62,19 @@ ATTACK1_EXCEPTION = (
 class Character:
     # 50x37
     def __init__(self):
+        # 디버그
         map.load_map('100')
+
         self.leftKeyDown = False
         self.rightKeyDown = False
 
         self.state = 'idle'             # 상태
-        self.subState = 'none'          # 중복 가능 상태
+        self.subState = 'jump'          # 중복 가능 상태
         self.frame = 0                  # 프레임
         self.timer = 0                  # 점프 최신화 주기
         self.dir = 'RIGHT'              # 좌우
-        self.x, self.y = 400, 100       # 좌표
+        self.hitBox = ()                # 히트박스
+        self.x, self.y = 400, 200       # 좌표
         self.dx, self. dy = 0, 0        # 움직이는 속도
         self.image = load_image(PATH + 'adventurer-v1.5-Sheet.png')
 
@@ -141,16 +157,22 @@ class Character:
                 self.image.clip_composite_draw(self.frame // MOTION_DELAY['air_attack2'] * 50, 0, 50, 37, 0, 'h', self.x, self.y, 50, 37)
 
     def update(self, delta_time):
+        # 히트박스 업데이트
+        self.updateHitBox()
+        #draw_rectangle(*self.hitBox)
+
         # 대기
         if self.state == 'idle':
             if self.rightKeyDown:
+                self.state = 'run'
                 self.dir = 'RIGHT'
-                self.state = 'run'
-                self.dx = 2
+                if not map.isCrashed(self.hitBox, self.dx, self.dy)[0]:
+                    self.dx = 2
             elif self.leftKeyDown:
-                self.dir = 'LEFT'
                 self.state = 'run'
-                self.dx = -2
+                self.dir = 'LEFT'
+                if not map.isCrashed(self.hitBox, self.dx, self.dy)[0]:
+                    self.dx = -2
             else:
                 # If it doesn't exist, frame goes up twice when I jump.
                 if self.subState == 'none':
@@ -172,9 +194,12 @@ class Character:
                 self.frame = 0
 
             # Crash Check
-            isCrashed = map.isCrashed(self.x, self.y, self.dx)
+            isCrashed = map.isCrashed(self.hitBox, self.dx, self.dy)
             if isCrashed[0]:
-                self.x, self.dx = isCrashed[1], 0
+                if isCrashed[1] == 'x':
+                    self.x, self.dx = isCrashed[2], 0
+                else:
+                    self.y, self.dy = isCrashed[2], 0
 
         # 공격
         elif self.state == 'attack1':
@@ -239,10 +264,14 @@ class Character:
                 self.y = isLanded[1]
 
             # Crash Check
-            isCrashed = map.isCrashed(self.x, self.y, self.dx)
+            isCrashed = map.isCrashed(self.hitBox, self.dx, self.dy)
             if isCrashed[0]:
-                self.x, self.dx = isCrashed[1], 0
+                if isCrashed[1] == 'x':
+                    self.x, self.dx = isCrashed[2], 0
+                else:
+                    self.y, self.dy = isCrashed[2], 0
             else:
+                # keep going if u press button
                 if self.leftKeyDown:
                     self.dx = -2
                 elif self.rightKeyDown:
@@ -264,6 +293,7 @@ class Character:
             self.subState = 'jump2'
             self.frame, self.timer = 0, 0
             self.y, self.dy = self.y + 5, 5
+
 
         # 왼쪽 달리기
         elif (e.key, e.type) == (SDLK_LEFT, SDL_KEYDOWN):
@@ -312,3 +342,19 @@ class Character:
         elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and (self.subState == 'jump' or self.subState == 'jump2'):
             self.state, self.subState = 'air_attack1', 'none'
             self.frame, self.dx, self.dy = 0, 0, -4
+
+    def updateHitBox(self):
+        if self.dir == 'RIGHT':
+            if self.subState == 'jump' or self.subState == 'jump2':
+                self.hitBox = (self.x - MOTION_HITBOX[self.subState][0], self.y + MOTION_HITBOX[self.subState][1],
+                               self.x - MOTION_HITBOX[self.subState][2], self.y + MOTION_HITBOX[self.subState][3])
+            else:
+                self.hitBox = (self.x - MOTION_HITBOX[self.state][0], self.y + MOTION_HITBOX[self.state][1],
+                               self.x - MOTION_HITBOX[self.state][2], self.y + MOTION_HITBOX[self.state][3])
+        else:
+            if self.subState == 'jump' or self.subState == 'jump2':
+                self.hitBox = (self.x - MOTION_HITBOX[self.subState][0], self.y + MOTION_HITBOX[self.subState][1],
+                               self.x - MOTION_HITBOX[self.subState][2], self.y + MOTION_HITBOX[self.subState][3])
+            else:
+                self.hitBox = (self.x + MOTION_HITBOX[self.state][0], self.y + MOTION_HITBOX[self.state][1],
+                               self.x + MOTION_HITBOX[self.state][2], self.y + MOTION_HITBOX[self.state][3])
