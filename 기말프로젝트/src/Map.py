@@ -72,51 +72,55 @@ class Map:
                 temp = i.split()
                 Map.TileSet.clip_draw(16 * int(temp[0]), 16 * int(temp[1]), 16, 16, int(temp[2]), Map.Size[1] - int(temp[3]), 32, 32)
             # 디버그 :: 바닥판정 그리기
-            for i in Map.TileLand:
-                draw_rectangle(i[0], i[1], i[2], i[3])
+            #for i in Map.TileLand:
+            #    draw_rectangle(i[0], i[1], i[2], i[3])
 
-    def isLanded(self, xChr, yChr, dyChr):
+    def isLanded(self, hitBox, dy):
         for i in Map.TileLand:
-            if i[0] <= xChr <= i[2] and yChr - 37 / 2 >= i[1] and yChr + dyChr - 37 / 2 <= i[1]:
+            # 바닥 도착 조건
+            # 1. 히트박스의 좌, 우 중에 하나라도 해당 지형의 폭 사이에 있어야한다.
+            # 2. 히트박스의 하단 + dy <= 지형의 상단 <= 히트박스의 하단이여야한다.
+            if (i[0] < hitBox[0] < i[2] or i[0] < hitBox[2] < i[2]) and \
+                hitBox[3] + dy <= i[1] <= hitBox[3]:
                 return True, i[1] + 37 / 2
         return False, 0
 
-    def isCrashed(self, hitBox, dxChr, dyChr):
+    def isCrashed(self, hitBox, dx, dy):
         for i in Map.TileLand:
-            result = isOverlaped(i, hitBox, dxChr, dyChr)
-            if result:
-                return True, result[1], result[2]
-        return False, 0, 0
+            RESULT = isOverlaped(i, hitBox, dx, dy)
+            if RESULT[0]: return RESULT
+        return RESULT
 
 # 사각형 겹침 체크 함수
 def isOverlaped(obj, hitBox, dx, dy):
     # x, y, dx, dy
-    RESULT = [0, 0, 0, 0]
+    RESULT = [False, 0, 0, dx, dy]
 
-    # 머리 부딪힘
-    if (dy > 0):
-        if (obj[0] < hitBox[0] < obj[2] or obj[0] < hitBox[2] < obj[2]) and \
-                (hitBox[3] <= obj[3] <= hitBox[3] + dy or
-                 obj[3] <= max(hitBox[1], hitBox[3]) <= obj[1]) and obj[1] != obj[3]:
-            return True, 'y', obj[3] - (abs(hitBox[1] - hitBox[3]) / 2)
+    # 머리 부딪히는 조건
+    # 1. 히트박스의 좌,우 중에 하나라도 해당 지형의 폭 사이에 있어야한다.
+    # 2. 히트박스의 상단 + 탐색 범위가 지형의 높이 사이에 있어야한다.
+    # 3. 지형의 모양이 사각형이여야한다.
+    # 4. 캐릭터가 위로 점프 중이여야한다.
+    if (obj[0] < hitBox[0] < obj[2] or obj[0] < hitBox[2] < obj[2]) and \
+        obj[3] <= hitBox[1] + dy <= obj[1] and \
+        obj[1] != obj[3] and dy > 0:
+        RESULT = [True, RESULT[1], RESULT[2] + obj[3] - (abs(hitBox[1] - hitBox[3]) / 2), RESULT[3], 0]
 
-    # 왼쪽으로 가다가 부딪힘
-    if (obj[3] < hitBox[1] < obj[1] or obj[3] < hitBox[3] < obj[1]) and \
-            (min(hitBox[0], hitBox[2]) >= obj[2] >= min(hitBox[0], hitBox[2]) + dx or
-             min(hitBox[0], hitBox[2]) <= obj[2] <= max(hitBox[0], hitBox[2])) and obj[1] != obj[3]:
-        return True, 'x', obj[2] + abs(hitBox[0] - hitBox[2])
+    # 좌측 부딪히는 조건
+    # 1. 히트박스의 상, 하 중에 하나라도 해당 지형의 높이 사이에 있어야한다.
+    # 2. 히트박스의 좌측 + 탐색 범위가 지형의 오른쪽끝보다 왼쪽에 있고,
+    #    히트박스의 좌측이 지형의 오른쪽 끝보단 오른쪽에 있어야한다.
+    # 3. 또는 히트박스의 우측이 지형의 폭 사이에 있어야한다.
+    # 4. 캐릭터가 좌측으로 이동 중이여야한다.
+    elif (obj[3] < hitBox[1] < obj[1] or obj[3] < hitBox[3] < obj[1]) and \
+       (min(hitBox[0], hitBox[2]) + dx <= obj[2] <= min(hitBox[0], hitBox[2]) or
+        obj[0] < min(hitBox[0], hitBox[2]) + dx < obj[2]) and dx < 0:
+        RESULT = [True, RESULT[1] + obj[2] + abs(hitBox[0] - hitBox[2]) + dx, RESULT[2], RESULT[3], RESULT[4]]
 
-    # 오른쪽으로 가다가 부딪힘
-    elif (obj[3] <= hitBox[1] < obj[1] or obj[3] <= hitBox[3] < obj[1]) and \
-            (max(hitBox[0], hitBox[2]) <= obj[0] <= max(hitBox[0], hitBox[2]) + dx or
-             min(hitBox[0], hitBox[2]) <= obj[0] <= max(hitBox[0], hitBox[2])) and obj[1] != obj[3]:
-        return True, 'x', obj[0] - abs(hitBox[0] - hitBox[2])
+    # 우측 부딪히는 조건 :: 좌측과 같음
+    elif (obj[3] < hitBox[1] < obj[1] or obj[3] < hitBox[3] < obj[1]) and \
+       (max(hitBox[0], hitBox[2]) <= obj[0] <= max(hitBox[0], hitBox[2]) + dx or
+        obj[0] < max(hitBox[0], hitBox[2]) + dx < obj[2]) and dx > 0:
+        RESULT = [True, RESULT[1] + obj[0] - abs(hitBox[0] - hitBox[2]) + dx, RESULT[2], RESULT[3], RESULT[4]]
 
-    # 머리 부딪힘
-    if (dy < 0):
-        if (obj[0] < hitBox[0] < obj[2] or obj[0] < hitBox[2] < obj[2]) and \
-                (hitBox[3] <= obj[3] <= hitBox[3] + dy or
-                 obj[3] <= max(hitBox[1], hitBox[3]) <= obj[1]) and obj[1] != obj[3]:
-            return True, 'y', obj[3] - (abs(hitBox[1] - hitBox[3]) / 2)
-
-    return False
+    return RESULT
