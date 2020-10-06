@@ -1,6 +1,6 @@
 from pico2d import *
 # 수동설정
-MAPID = 100
+MAPID = 200
 MAP_WIDTH = 800
 MAP_HEIGHT = 600
 open_canvas(MAP_WIDTH + 192 * 2, MAP_HEIGHT)
