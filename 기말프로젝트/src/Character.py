@@ -159,7 +159,7 @@ class Character:
     def update(self, delta_time):
         # 히트박스 업데이트
         self.updateHitBox()
-        draw_rectangle(*self.hitBox)
+        #draw_rectangle(*self.hitBox)
 
         # 대기
         if self.state == 'idle':
@@ -179,7 +179,6 @@ class Character:
                     self.frame += 1
                 if self.frame >= MOTION_FRAME['idle'] * MOTION_DELAY['idle']:
                     self.frame = 0
-
         # 달리기
         elif self.state == 'run' and self.subState == 'none':
             self.frame += 1
@@ -188,18 +187,10 @@ class Character:
                 self.frame = 0
 
             # Fallen Check
-            isLanded = map.isLanded(self.x, self.y, self.dy)
+            isLanded = map.isLanded(self.hitBox, self.dy)
             if not isLanded[0]:
                 self.subState = 'jump'
                 self.frame = 0
-
-            # Crash Check
-            isCrashed = map.isCrashed(self.hitBox, self.dx, self.dy)
-            if isCrashed[0]:
-                if isCrashed[1] == 'x':
-                    self.x, self.dx = isCrashed[2], 0
-                else:
-                    self.y, self.dy = isCrashed[2], 0
 
         # 공격
         elif self.state == 'attack1':
@@ -228,7 +219,7 @@ class Character:
                 self.frame = MOTION_DELAY['air_attack1']
 
             # Landing Check
-            isLanded = map.isLanded(self.x, self.y, self.dy)
+            isLanded = map.isLanded(self.hitBox, self.dy)
             if isLanded[0]:
                 self.state = 'air_attack2'
                 self.frame, self.dy = 0, 0
@@ -255,27 +246,26 @@ class Character:
                 self.frame = (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']
 
             # Landing Check
-            isLanded = map.isLanded(self.x, self.y, self.dy)
+            isLanded = map.isLanded(self.hitBox, self.dy)
             if isLanded[0]:
                 self.state = 'idle'
                 self.subState = 'none'
                 self.frame = 0
                 self.dy = 0
                 self.y = isLanded[1]
-
-            # Crash Check
-            isCrashed = map.isCrashed(self.hitBox, self.dx, self.dy)
-            if isCrashed[0]:
-                if isCrashed[1] == 'x':
-                    self.x, self.dx = isCrashed[2], 0
-                else:
-                    self.y, self.dy = isCrashed[2], 0
             else:
                 # keep going if now pressing button
                 if self.leftKeyDown:
                     self.dx = -2
                 elif self.rightKeyDown:
                     self.dx = 2
+
+        # Crash Check
+        isCrashed = map.isCrashed(self.hitBox, self.dx, self.dy)
+        if isCrashed[0]:
+            if isCrashed[1] != 0: self.x = isCrashed[1]
+            if isCrashed[2] != 0: self.y = isCrashed[2]
+            self.dx, self.dy = isCrashed[3], isCrashed[4]
 
         # Chr Pos Update
         self.x += self.dx
