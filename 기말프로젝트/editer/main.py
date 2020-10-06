@@ -30,8 +30,8 @@ def eventHandler():
         # 선택한 타일 그리기    
         elif e.type == SDL_MOUSEMOTION:
             if Selection is not None:
-                tile.clip_draw(16 * Selection[0], 16 * Selection[1], 16, 16, e.x // 32 * 32, MAP_HEIGHT - (e.y // 32 * 32), 32, 32)
-                mPos = e.x, e.y
+                tile.clip_draw(16 * Selection[0], 16 * Selection[1], 16, 16, (e.x + 16) // 32 * 32, MAP_HEIGHT - ((e.y + 16) // 32 * 32), 32, 32)
+                mPos = e.x + 16, e.y + 16
         # 타일 선택, 타일 저장
         elif (e.type, e.button) == (SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT):
             for i in range(12):
@@ -40,7 +40,7 @@ def eventHandler():
                        32 * j + MAP_HEIGHT - 176 * 2 <= MAP_HEIGHT - e.y <= 32 * j + 32 + MAP_HEIGHT - 176 * 2:
                         Selection = (i, j)
             if 0 <= e.x <= MAP_WIDTH and 0 <= e.y <= MAP_HEIGHT and Selection is not None:
-                DATA.append((Selection, e.x // 32 * 32, e.y // 32 * 32))
+                DATA.append((Selection, (e.x + 16) // 32 * 32, (e.y + 16) // 32 * 32))
         # 타일 선택 해제
         elif (e.type, e.button) == (SDL_MOUSEBUTTONDOWN, SDL_BUTTON_RIGHT):
             Selection = None
