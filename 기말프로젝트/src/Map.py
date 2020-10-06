@@ -54,7 +54,14 @@ class Map:
                 Map.TileLand.append((pos[0] - 16, Map.Size[1] - pos[1], pos[0] + 16, Map.Size[1] - pos[1]))
             elif type == (5, 7) or type == (6, 7) or type == (7, 7):
                 Map.TileLand.append(((pos[0] - 16, Map.Size[1] - pos[1] + 16, pos[0] + 16, Map.Size[1] - pos[1] + 16)))
-
+            elif type == (3, 10) or type == (3, 7):
+                Map.TileLand.append((pos[0], Map.Size[1] - pos[1], pos[0] + 16, Map.Size[1] - pos[1] - 16))
+            elif type == (4, 10) or type == (4, 7):
+                Map.TileLand.append((pos[0] - 16, Map.Size[1] - pos[1], pos[0], Map.Size[1] - pos[1] - 16))
+            elif type == (3, 9) or type == (3, 6):
+                Map.TileLand.append((pos[0], Map.Size[1] - pos[1] + 16, pos[0] + 16, Map.Size[1] - pos[1]))
+            elif type == (4, 9) or type == (4, 6):
+                Map.TileLand.append((pos[0] - 16, Map.Size[1] - pos[1] + 16, pos[0], Map.Size[1] - pos[1]))
 
     def draw(self):
         # 타일셋 로드
@@ -65,8 +72,8 @@ class Map:
                 temp = i.split()
                 Map.TileSet.clip_draw(16 * int(temp[0]), 16 * int(temp[1]), 16, 16, int(temp[2]), Map.Size[1] - int(temp[3]), 32, 32)
             # 디버그 :: 바닥판정 그리기
-            #for i in Map.TileLand:
-            #    draw_rectangle(i[0], i[1], i[2], i[3])
+            for i in Map.TileLand:
+                draw_rectangle(i[0], i[1], i[2], i[3])
 
     def isLanded(self, xChr, yChr, dyChr):
         for i in Map.TileLand:
@@ -83,19 +90,33 @@ class Map:
 
 # 사각형 겹침 체크 함수
 def isOverlaped(obj, hitBox, dx, dy):
+    # x, y, dx, dy
+    RESULT = [0, 0, 0, 0]
+
+    # 머리 부딪힘
+    if (dy > 0):
+        if (obj[0] < hitBox[0] < obj[2] or obj[0] < hitBox[2] < obj[2]) and \
+                (hitBox[3] <= obj[3] <= hitBox[3] + dy or
+                 obj[3] <= max(hitBox[1], hitBox[3]) <= obj[1]) and obj[1] != obj[3]:
+            return True, 'y', obj[3] - (abs(hitBox[1] - hitBox[3]) / 2)
+
     # 왼쪽으로 가다가 부딪힘
     if (obj[3] < hitBox[1] < obj[1] or obj[3] < hitBox[3] < obj[1]) and \
-            (min(hitBox[0], hitBox[2]) >= obj[2] >= min(hitBox[0], hitBox[2]) + dx or min(hitBox[0], hitBox[2]) <= obj[2] <= max(hitBox[0], hitBox[2])) and obj[1] != obj[3]:
+            (min(hitBox[0], hitBox[2]) >= obj[2] >= min(hitBox[0], hitBox[2]) + dx or
+             min(hitBox[0], hitBox[2]) <= obj[2] <= max(hitBox[0], hitBox[2])) and obj[1] != obj[3]:
         return True, 'x', obj[2] + abs(hitBox[0] - hitBox[2])
 
     # 오른쪽으로 가다가 부딪힘
-    if (obj[3] <= hitBox[1] < obj[1] or obj[3] <= hitBox[3] < obj[1]) and \
-            (max(hitBox[0], hitBox[2]) <= obj[0] <= max(hitBox[0], hitBox[2]) + dx or min(hitBox[0], hitBox[2]) <= obj[0] <= max(hitBox[0], hitBox[2])) and obj[1] != obj[3]:
+    elif (obj[3] <= hitBox[1] < obj[1] or obj[3] <= hitBox[3] < obj[1]) and \
+            (max(hitBox[0], hitBox[2]) <= obj[0] <= max(hitBox[0], hitBox[2]) + dx or
+             min(hitBox[0], hitBox[2]) <= obj[0] <= max(hitBox[0], hitBox[2])) and obj[1] != obj[3]:
         return True, 'x', obj[0] - abs(hitBox[0] - hitBox[2])
 
     # 머리 부딪힘
-    if (obj[0] < hitBox[0] < obj[2] or obj[0] < hitBox[2] < obj[2]) and \
-        hitBox[3] <= obj[3] <= hitBox[3] + dy * 3 and obj[1] != obj[3]:
-       return True, 'y', obj[3] - (abs(hitBox[1] - hitBox[3]) / 2)
+    if (dy < 0):
+        if (obj[0] < hitBox[0] < obj[2] or obj[0] < hitBox[2] < obj[2]) and \
+                (hitBox[3] <= obj[3] <= hitBox[3] + dy or
+                 obj[3] <= max(hitBox[1], hitBox[3]) <= obj[1]) and obj[1] != obj[3]:
+            return True, 'y', obj[3] - (abs(hitBox[1] - hitBox[3]) / 2)
 
     return False
