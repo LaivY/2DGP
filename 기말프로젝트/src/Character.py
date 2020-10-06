@@ -159,7 +159,7 @@ class Character:
     def update(self, delta_time):
         # 히트박스 업데이트
         self.updateHitBox()
-        #draw_rectangle(*self.hitBox)
+        draw_rectangle(*self.hitBox)
 
         # 대기
         if self.state == 'idle':
@@ -246,7 +246,7 @@ class Character:
 
             # update Cycle
             self.timer += delta_time
-            if self.timer > 0.08:
+            if self.timer > delta_time * 5:
                 self.dy -= 2
                 self.timer = 0
 
@@ -271,7 +271,7 @@ class Character:
                 else:
                     self.y, self.dy = isCrashed[2], 0
             else:
-                # keep going if u press button
+                # keep going if now pressing button
                 if self.leftKeyDown:
                     self.dx = -2
                 elif self.rightKeyDown:
