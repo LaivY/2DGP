@@ -30,10 +30,11 @@ MOTION_FRAME = {
 
 # 모션별 히트박스
 MOTION_HITBOX = {
-    'idle': (6, 37 / 2 - 7, -5, -37 / 2),
+    'idle': (6, 37 / 2 - 7, -6, -37 / 2),
     'run': (0, 37 / 2 - 7, -11, -37 / 2),
-    'jump': (5, 5, -7, -9),
-    'jump2': (5, 5, -7, -9),
+    #'run': (6, 37 / 2 - 7, -5, -37 / 2),
+    'jump': (6, 5, -6, -9),
+    'jump2': (6, 5, -6, -9),
     'attack1': (5, 37 / 2 - 15, -5, -37 / 2),
     'attack2': (5, 37 / 2 - 13, -5, -37 / 2),
     'attack3': (5, 37 / 2 - 13, -5, -37 / 2),
@@ -166,12 +167,12 @@ class Character:
             if self.rightKeyDown:
                 self.state = 'run'
                 self.dir = 'RIGHT'
-                if not map.isCrashed(self.hitBox, self.dx, self.dy)[0]:
+                if not map.chr_Collide_Check(self.hitBox, self.state, self.subState, self.dx, self.dy)[0]:
                     self.dx = 2
             elif self.leftKeyDown:
                 self.state = 'run'
                 self.dir = 'LEFT'
-                if not map.isCrashed(self.hitBox, self.dx, self.dy)[0]:
+                if not map.chr_Collide_Check(self.hitBox, self.state, self.subState, self.dx, self.dy)[0]:
                     self.dx = -2
             else:
                 # If it doesn't exist, frame goes up twice when I jump.
@@ -187,8 +188,8 @@ class Character:
                 self.frame = 0
 
             # Fallen Check
-            isLanded = map.isLanded(self.hitBox, self.dy)
-            if not isLanded[0]:
+            Landing_Result = map.chr_Ladning_Check(self.hitBox, self.dy)
+            if not Landing_Result[0]:
                 self.subState = 'jump'
                 self.frame = 0
 
@@ -219,11 +220,11 @@ class Character:
                 self.frame = MOTION_DELAY['air_attack1']
 
             # Landing Check
-            isLanded = map.isLanded(self.hitBox, self.dy)
-            if isLanded[0]:
+            Landing_Result = map.chr_Ladning_Check(self.hitBox, self.dy)
+            if Landing_Result[0]:
                 self.state = 'air_attack2'
                 self.frame, self.dy = 0, 0
-                self.y = isLanded[1]
+                self.y = Landing_Result[1]
 
         elif self.state == 'air_attack2':
             self.frame += 1
@@ -246,13 +247,13 @@ class Character:
                 self.frame = (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']
 
             # Landing Check
-            isLanded = map.isLanded(self.hitBox, self.dy)
-            if isLanded[0]:
+            Landing_Result = map.chr_Ladning_Check(self.hitBox, self.dy)
+            if Landing_Result[0]:
                 self.state = 'idle'
                 self.subState = 'none'
                 self.frame = 0
                 self.dy = 0
-                self.y = isLanded[1]
+                self.y = Landing_Result[1]
             else:
                 # keep going if now pressing button
                 if self.leftKeyDown:
@@ -260,12 +261,12 @@ class Character:
                 elif self.rightKeyDown:
                     self.dx = 2
 
-        # Crash Check
-        isCrashed = map.isCrashed(self.hitBox, self.dx, self.dy)
-        if isCrashed[0]:
-            if isCrashed[1] != 0: self.x = isCrashed[1]
-            if isCrashed[2] != 0: self.y = isCrashed[2]
-            self.dx, self.dy = isCrashed[3], isCrashed[4]
+        # Collide Check
+        Collide_Result = map.chr_Collide_Check(self.hitBox, self.state, self.subState, self.dx, self.dy)
+        if Collide_Result[0]:
+            if Collide_Result[1] != 0: self.x = Collide_Result[1]
+            if Collide_Result[2] != 0: self.y = Collide_Result[2]
+            self.dx, self.dy = Collide_Result[3], Collide_Result[4]
 
         # Chr Pos Update
         self.x += self.dx
