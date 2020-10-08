@@ -75,7 +75,7 @@ class Map:
             #for i in Map.TileLand:
             #    draw_rectangle(i[0], i[1], i[2], i[3])
 
-    def isLanded(self, hitBox, dy):
+    def chr_Ladning_Check(self, hitBox, dy):
         for i in Map.TileLand:
             # 바닥 도착 조건
             # 1. 히트박스의 좌, 우 중에 하나라도 해당 지형의 폭 사이에 있어야한다.
@@ -85,14 +85,13 @@ class Map:
                 return True, i[1] + 37 / 2
         return False, 0
 
-    def isCrashed(self, hitBox, dx, dy):
+    def chr_Collide_Check(self, hitBox, state, subState, dx, dy):
         for i in Map.TileLand:
-            RESULT = isOverlaped(i, hitBox, dx, dy)
+            RESULT = get_Chr_Collide_Result(i, hitBox, state, subState, dx, dy)
             if RESULT[0]: return RESULT
         return RESULT
 
-# 사각형 겹침 체크 함수
-def isOverlaped(obj, hitBox, dx, dy):
+def get_Chr_Collide_Result(obj, hitBox, state, subState, dx, dy):
     # x, y, dx, dy
     RESULT = [False, 0, 0, dx, dy]
 
@@ -115,12 +114,18 @@ def isOverlaped(obj, hitBox, dx, dy):
     elif (obj[3] < hitBox[1] < obj[1] or obj[3] < hitBox[3] < obj[1]) and \
        (min(hitBox[0], hitBox[2]) + dx <= obj[2] <= min(hitBox[0], hitBox[2]) or
         obj[0] < min(hitBox[0], hitBox[2]) + dx < obj[2]) and dx < 0:
-        RESULT = [True, RESULT[1] + obj[2] + abs(hitBox[0] - hitBox[2]) + dx, RESULT[2], RESULT[3], RESULT[4]]
+        if state == 'run' and subState == 'none':
+            RESULT = [True, RESULT[1] + obj[2] + abs(hitBox[0] - hitBox[2]) - dx, RESULT[2], RESULT[3], RESULT[4]]
+        else:
+            RESULT = [True, RESULT[1] + obj[2] + abs(hitBox[0] - hitBox[2]) + dx, RESULT[2], RESULT[3], RESULT[4]]
 
     # 우측 부딪히는 조건 :: 좌측과 같음
     elif (obj[3] < hitBox[1] < obj[1] or obj[3] < hitBox[3] < obj[1]) and \
        (max(hitBox[0], hitBox[2]) <= obj[0] <= max(hitBox[0], hitBox[2]) + dx or
         obj[0] < max(hitBox[0], hitBox[2]) + dx < obj[2]) and dx > 0:
-        RESULT = [True, RESULT[1] + obj[0] - abs(hitBox[0] - hitBox[2]) + dx, RESULT[2], RESULT[3], RESULT[4]]
+        if state == 'run' and subState == 'none':
+            RESULT = [True, RESULT[1] + obj[0] - abs(hitBox[0] - hitBox[2]) - dx, RESULT[2], RESULT[3], RESULT[4]]
+        else:
+            RESULT = [True, RESULT[1] + obj[0] - abs(hitBox[0] - hitBox[2]) + dx, RESULT[2], RESULT[3], RESULT[4]]
 
     return RESULT
