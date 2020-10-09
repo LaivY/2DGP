@@ -1,5 +1,4 @@
 import ini
-import math
 from pico2d import *
 
 Canvas_WIDTH = ini.MAP_WIDTH + 192 * 2
@@ -12,7 +11,7 @@ def eventHandler():
         if e.type == SDL_QUIT or (e.type, e.key) == (SDL_KEYDOWN, SDLK_ESCAPE):
             running = False
         # Draw selection
-        elif e.type == SDL_MOUSEMOTION and ini.selection is not None:
+        elif e.type == SDL_MOUSEMOTION:
             ini.mPos = e.x + 16, e.y + 16
         # Tile select and add data
         elif (e.type, e.button) == (SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT):
@@ -20,6 +19,9 @@ def eventHandler():
         # Release selection
         elif (e.type, e.button) == (SDL_MOUSEBUTTONDOWN, SDL_BUTTON_RIGHT):
             ini.selection = None
+        # Print mouse position
+        elif (e.type, e.key) == (SDL_KEYDOWN, SDLK_a):
+            print(ini.mPos[0], Canvas_HEIGHT - ini.mPos[1])
         # Save
         elif (e.type, e.key) == (SDL_KEYDOWN, SDLK_s):
             saveData()
@@ -43,11 +45,6 @@ def drawMap():
                        i[1], Canvas_HEIGHT - i[2], 32, 32)
     draw_rectangle(0, Canvas_HEIGHT - 1, ini.MAP_WIDTH, Canvas_HEIGHT - ini.MAP_HEIGHT)
 
-def setBGR():
-    for i in range(math.ceil(ini.MAP_WIDTH / 32) + 1):
-        for j in range(math.ceil(ini.MAP_HEIGHT / 32) + 1):
-            ini.DATA.append((ini.BGR, i * 32, j * 32))
-
 def addData(x, y):
     # Select
     for i in range(12):
@@ -57,11 +54,13 @@ def addData(x, y):
                 ini.selection = (i, j)
     # Add
     if 0 <= x <= ini.MAP_WIDTH and 0 <= y <= ini.MAP_HEIGHT and ini.selection is not None:
+        # Portal
         if ini.selection in [(11, 0), (10, 0), (9, 0), (10, 1)]:
             des = int(input('Destination : '))
             xPos = int(input('x : '))
             yPos = int(input('y : '))
             ini.DATA.append((ini.selection, (x + 16) // 32 * 32, (y + 16) // 32 * 32, des, xPos, yPos))
+        # Normal
         else:
             ini.DATA.append((ini.selection, (x + 16) // 32 * 32, (y + 16) // 32 * 32))
 
@@ -81,7 +80,6 @@ def saveData():
     print('저장완료')
 
 
-setBGR()
 running = True
 open_canvas(Canvas_WIDTH, Canvas_HEIGHT)
 tile = load_image(ini.path + 'Space_Cave_Tileset.png')

@@ -86,6 +86,7 @@ class Map:
     def draw(self):
         for i in self.tileInfo:
             temp = i.split()
+            if (int(temp[0]), int(temp[1])) in [(9, 0), (10, 0), (10, 1), (11, 0)]: continue
             Map.TileSet.clip_draw(16 * int(temp[0]), 16 * int(temp[1]), 16, 16, int(temp[2]), self.size[1] - int(temp[3]), 32, 32)
         for i in self.portalRect:
             draw_rectangle(i[0], i[1], i[2], i[3])
