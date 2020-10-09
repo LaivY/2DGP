@@ -1,8 +1,5 @@
+import Ingame_state
 from pico2d import *
-from Map import Map
-
-PATH = '../res/'
-map = Map()
 
 # 모션별 딜레이
 MOTION_DELAY = {
@@ -63,9 +60,6 @@ ATTACK1_EXCEPTION = (
 class Character:
     # 50x37
     def __init__(self):
-        # 디버그
-        map.load_map('100')
-
         self.leftKeyDown = False
         self.rightKeyDown = False
 
@@ -75,9 +69,8 @@ class Character:
         self.timer = 0                  # 점프 최신화 주기
         self.dir = 'RIGHT'              # 좌우
         self.hitBox = ()                # 히트박스
-        self.x, self.y = 400, 200       # 좌표
-        self.dx, self. dy = 0, 0        # 움직이는 속도
-        self.image = load_image(PATH + 'adventurer-v1.5-Sheet.png')
+        self.x, self.y, self.dx, self. dy = 300, 400, 0, 0 # 좌표
+        self.image = None
 
     def draw(self):
         # 점프
@@ -160,117 +153,13 @@ class Character:
     def update(self, delta_time):
         # 히트박스 업데이트
         self.updateHitBox()
-        #draw_rectangle(*self.hitBox)
+        
+        # 포탈 충돌 체크
+        Ingame_state.chr_portal_check()
 
-        # 대기
-        if self.state == 'idle':
-            if self.rightKeyDown:
-                self.state = 'run'
-                self.dir = 'RIGHT'
-                if not map.chr_Collide_Check(self.hitBox, self.state, self.subState, self.dx, self.dy)[0]:
-                    self.dx = 2
-            elif self.leftKeyDown:
-                self.state = 'run'
-                self.dir = 'LEFT'
-                if not map.chr_Collide_Check(self.hitBox, self.state, self.subState, self.dx, self.dy)[0]:
-                    self.dx = -2
-            else:
-                # If it doesn't exist, frame goes up twice when I jump.
-                if self.subState == 'none':
-                    self.frame += 1
-                if self.frame >= MOTION_FRAME['idle'] * MOTION_DELAY['idle']:
-                    self.frame = 0
-        # 달리기
-        elif self.state == 'run' and self.subState == 'none':
-            self.frame += 1
+        # Chr pos update
+        self.update_chr_pos(delta_time)
 
-            if self.frame >= MOTION_FRAME['run'] * MOTION_DELAY['run']:
-                self.frame = 0
-
-            # Fallen Check
-            Landing_Result = map.chr_Ladning_Check(self.hitBox, self.dy)
-            if not Landing_Result[0]:
-                self.subState = 'jump'
-                self.frame = 0
-
-        # 공격
-        elif self.state == 'attack1':
-            self.frame += 1
-            if self.frame >= MOTION_FRAME['attack1'] * MOTION_DELAY['attack1']:
-                self.frame = 0
-                self.state = 'idle'
-        elif self.state == 'attack2':
-            self.frame += 1
-            if self.frame >= MOTION_FRAME['attack2'] * MOTION_DELAY['attack2']:
-                self.frame = 0
-                self.state = 'idle'
-        elif self.state == 'attack3':
-            self.frame += 1
-            if self.frame >= MOTION_FRAME['attack3'] * MOTION_DELAY['attack3']:
-                self.frame = 0
-                self.state = 'idle'
-
-        # 공중공격
-        elif self.state == 'air_attack1':
-            self.frame += 1
-            self.dy -= 0.05
-
-            # Frame Repeat
-            if self.frame >= (MOTION_FRAME['air_attack1'] - 1) * MOTION_DELAY['air_attack1']:
-                self.frame = MOTION_DELAY['air_attack1']
-
-            # Landing Check
-            Landing_Result = map.chr_Ladning_Check(self.hitBox, self.dy)
-            if Landing_Result[0]:
-                self.state = 'air_attack2'
-                self.frame, self.dy = 0, 0
-                self.y = Landing_Result[1]
-
-        elif self.state == 'air_attack2':
-            self.frame += 1
-            if self.frame >= MOTION_FRAME['air_attack2'] * MOTION_DELAY['air_attack2']:
-                self.state = 'idle'
-                self.frame = 0
-
-        # 점프
-        if self.subState == 'jump' or self.subState == 'jump2':
-            self.frame += 1
-
-            # update Cycle
-            self.timer += delta_time
-            if self.timer > delta_time * 5:
-                self.dy -= 2
-                self.timer = 0
-
-            # Frame Fix
-            if self.frame > (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']:
-                self.frame = (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']
-
-            # Landing Check
-            Landing_Result = map.chr_Ladning_Check(self.hitBox, self.dy)
-            if Landing_Result[0]:
-                self.state = 'idle'
-                self.subState = 'none'
-                self.frame = 0
-                self.dy = 0
-                self.y = Landing_Result[1]
-            else:
-                # keep going if now pressing button
-                if self.leftKeyDown:
-                    self.dx = -2
-                elif self.rightKeyDown:
-                    self.dx = 2
-
-        # Collide Check
-        Collide_Result = map.chr_Collide_Check(self.hitBox, self.state, self.subState, self.dx, self.dy)
-        if Collide_Result[0]:
-            if Collide_Result[1] != 0: self.x = Collide_Result[1]
-            if Collide_Result[2] != 0: self.y = Collide_Result[2]
-            self.dx, self.dy = Collide_Result[3], Collide_Result[4]
-
-        # Chr Pos Update
-        self.x += self.dx
-        self.y += self.dy
 
     def eventHandler(self, e):
         # 점프
@@ -333,6 +222,117 @@ class Character:
         elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and (self.subState == 'jump' or self.subState == 'jump2'):
             self.state, self.subState = 'air_attack1', 'none'
             self.frame, self.dx, self.dy = 0, 0, -4
+
+    def update_chr_pos(self, delta_time):
+        # 대기
+        if self.state == 'idle':
+            if self.rightKeyDown:
+                self.state = 'run'
+                self.dir = 'RIGHT'
+                if not Ingame_state.chr_collide_check()[0]:
+                    self.dx = 2
+            elif self.leftKeyDown:
+                self.state = 'run'
+                self.dir = 'LEFT'
+                if not Ingame_state.chr_collide_check()[0]:
+                    self.dx = -2
+            else:
+                # If it doesn't exist, frame goes up twice when I jump.
+                if self.subState == 'none':
+                    self.frame += 1
+                if self.frame >= MOTION_FRAME['idle'] * MOTION_DELAY['idle']:
+                    self.frame = 0
+        # 달리기
+        elif self.state == 'run' and self.subState == 'none':
+            self.frame += 1
+
+            if self.frame >= MOTION_FRAME['run'] * MOTION_DELAY['run']:
+                self.frame = 0
+
+            # Fallen Check
+            Landing_Result = Ingame_state.chr_ladning_check()
+            if not Landing_Result[0]:
+                self.subState = 'jump'
+                self.frame = 0
+
+        # 공격
+        elif self.state == 'attack1':
+            self.frame += 1
+            if self.frame >= MOTION_FRAME['attack1'] * MOTION_DELAY['attack1']:
+                self.frame = 0
+                self.state = 'idle'
+        elif self.state == 'attack2':
+            self.frame += 1
+            if self.frame >= MOTION_FRAME['attack2'] * MOTION_DELAY['attack2']:
+                self.frame = 0
+                self.state = 'idle'
+        elif self.state == 'attack3':
+            self.frame += 1
+            if self.frame >= MOTION_FRAME['attack3'] * MOTION_DELAY['attack3']:
+                self.frame = 0
+                self.state = 'idle'
+
+        # 공중공격
+        elif self.state == 'air_attack1':
+            self.frame += 1
+            self.dy -= 0.05
+
+            # Frame Repeat
+            if self.frame >= (MOTION_FRAME['air_attack1'] - 1) * MOTION_DELAY['air_attack1']:
+                self.frame = MOTION_DELAY['air_attack1']
+
+            # Landing Check
+            Landing_Result = Ingame_state.chr_ladning_check()
+            if Landing_Result[0]:
+                self.state = 'air_attack2'
+                self.frame, self.dy = 0, 0
+                self.y = Landing_Result[1]
+
+        elif self.state == 'air_attack2':
+            self.frame += 1
+            if self.frame >= MOTION_FRAME['air_attack2'] * MOTION_DELAY['air_attack2']:
+                self.state = 'idle'
+                self.frame = 0
+
+        # 점프
+        if self.subState == 'jump' or self.subState == 'jump2':
+            self.frame += 1
+
+            # update Cycle
+            self.timer += delta_time
+            if self.timer > delta_time * 5:
+                self.dy -= 2
+                self.timer = 0
+
+            # Frame Fix
+            if self.frame > (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']:
+                self.frame = (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']
+
+            # Landing Check
+            Landing_Result = Ingame_state.chr_ladning_check()
+            if Landing_Result[0]:
+                self.state = 'idle'
+                self.subState = 'none'
+                self.frame = 0
+                self.dy = 0
+                self.y = Landing_Result[1]
+            else:
+                # keep going if now pressing button
+                if self.leftKeyDown:
+                    self.dx = -2
+                elif self.rightKeyDown:
+                    self.dx = 2
+
+        # Collide Check
+        Collide_Result = Ingame_state.chr_collide_check()
+        if Collide_Result[0]:
+            if Collide_Result[1] != 0: self.x = Collide_Result[1]
+            if Collide_Result[2] != 0: self.y = Collide_Result[2]
+            self.dx, self.dy = Collide_Result[3], Collide_Result[4]
+
+        # Chr Pos Update
+        self.x += self.dx
+        self.y += self.dy
 
     def updateHitBox(self):
         if self.dir == 'RIGHT':
