@@ -39,6 +39,7 @@
 - **게임 STATE 흐름**
 
  ![GAME STATE](https://blogfiles.pstatic.net/MjAyMDEwMTJfMjQ4/MDAxNjAyNDcwNDg1NDQz.Zm2Jt4zrzIxMZ2LjbK8JdajdCVns-0JjTxYhg8r7UrAg.D7ZSS7L29tvKk_o5qm9lIViBqvcs-ukxJ0NfrqdjyYkg.PNG.dnsjdbstlr/state.png?type=w2)
+ 
 	> LOGO_STATE
 	
 	3초 후 MAIN_STATE로 넘어갑니다. 특별한 이벤트는 없습니다.
@@ -55,6 +56,7 @@
 - **캐릭터 STATE 흐름**
 
 ![CHR STATE](https://blogfiles.pstatic.net/MjAyMDEwMTJfMTcx/MDAxNjAyNDczMzU0MDcy.yLVb7uZ0bkeM-FZr8qtwZlmTikCgFoSwL_Me6US32hcg.vDoaRFW0M5lrRMdCAP9YeST6Gb64uAPWEmZqiZvB6xog.PNG.dnsjdbstlr/chrState.png?type=w2)
+
 	> RUN
 
 	좌우 방향키를 눌렀을 때의 상태. 캐릭터가 좌우로 움직입니다.
