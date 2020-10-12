@@ -40,41 +40,41 @@
 
  ![GAME STATE](https://blogfiles.pstatic.net/MjAyMDEwMTJfMjQ4/MDAxNjAyNDcwNDg1NDQz.Zm2Jt4zrzIxMZ2LjbK8JdajdCVns-0JjTxYhg8r7UrAg.D7ZSS7L29tvKk_o5qm9lIViBqvcs-ukxJ0NfrqdjyYkg.PNG.dnsjdbstlr/state.png?type=w2)
  
-	> LOGO_STATE
-	
-	3초 후 MAIN_STATE로 넘어갑니다. 특별한 이벤트는 없습니다.
-	
-	> MAIN_STATE
-	
-	마우스 클릭으로 자신이 원하는 버튼을 클릭합니다.
-	처음부터 / 이어하기 / 게임종료 3가지 버튼에 따라 STATE를 이동합니다.
-	
-	> INGAME_STATE
-	
-	인게임 화면이 그려지는 STATE입니다. 캐릭터가 죽었을 경우 
-	재도전 / 메인으로 버튼에 따라 STATE를 이동합니다.
+> LOGO_STATE
+
+3초 후 MAIN_STATE로 넘어갑니다. 특별한 이벤트는 없습니다.
+
+> MAIN_STATE
+
+마우스 클릭으로 자신이 원하는 버튼을 클릭합니다.
+처음부터 / 이어하기 / 게임종료 3가지 버튼에 따라 STATE를 이동합니다.
+
+> INGAME_STATE
+
+인게임 화면이 그려지는 STATE입니다. 캐릭터가 죽었을 경우 
+재도전 / 메인으로 버튼에 따라 STATE를 이동합니다.
 - **캐릭터 STATE 흐름**
 
 ![CHR STATE](https://blogfiles.pstatic.net/MjAyMDEwMTJfMTcx/MDAxNjAyNDczMzU0MDcy.yLVb7uZ0bkeM-FZr8qtwZlmTikCgFoSwL_Me6US32hcg.vDoaRFW0M5lrRMdCAP9YeST6Gb64uAPWEmZqiZvB6xog.PNG.dnsjdbstlr/chrState.png?type=w2)
 
-	> RUN
+> RUN
 
-	좌우 방향키를 눌렀을 때의 상태. 캐릭터가 좌우로 움직입니다.
-	> ATTACK1, 2, 3
-	
-	IDLE상태에서 x키를 눌렀을 때의 상태. 타이밍에 맞게 x키를 누를 경우 ATTACK1 ~ 3까지 연계됩니다.
-	중간에 x키를 누르지 않았을 경우엔 해당 상태가 끝난 뒤 IDLE상태로 돌아갑니다.
+좌우 방향키를 눌렀을 때의 상태. 캐릭터가 좌우로 움직입니다.
+> ATTACK1, 2, 3
 
-	> HIT
-	
-	캐릭터가 피해를 입었을 때의 상태.
-	캐릭터가 뒤로 넉백되며 땅에 닿았을 경우 IDLE상태로 돌아갑니다.
+IDLE상태에서 x키를 눌렀을 때의 상태. 타이밍에 맞게 x키를 누를 경우 ATTACK1 ~ 3까지 연계됩니다.
+중간에 x키를 누르지 않았을 경우엔 해당 상태가 끝난 뒤 IDLE상태로 돌아갑니다.
 
-	> JUMP, JUMP2
+> HIT
 
-	서브(2번째) 상태로서 **RUN + JUMP** 또는 **HIT + JUMP2** 와 같은 STATE가 있을 수 있습니다.
-	이는 각각 **점프 중에 움직이는 중**, **피격당하면서 넉백중** 이라는 의미를 가집니다.
-	평소에는 'None' 상태입니다.
+캐릭터가 피해를 입었을 때의 상태.
+캐릭터가 뒤로 넉백되며 땅에 닿았을 경우 IDLE상태로 돌아갑니다.
+
+> JUMP, JUMP2
+
+서브(2번째) 상태로서 **RUN + JUMP** 또는 **HIT + JUMP2** 와 같은 STATE가 있을 수 있습니다.
+이는 각각 **점프 중에 움직이는 중**, **피격당하면서 넉백중** 이라는 의미를 가집니다.
+평소에는 'None' 상태입니다.
 	
 ## 4. 개발일정
 
