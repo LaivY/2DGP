@@ -37,6 +37,7 @@
 	- 계속해서 아이템을 파밍해가면서 강해지는 캐릭터
 	- 강해진 캐릭터를 기반으로 보스몬스터까지 클리어
 - **게임 STATE 흐름**
+
  ![GAME STATE](https://blogfiles.pstatic.net/MjAyMDEwMTJfMjQ4/MDAxNjAyNDcwNDg1NDQz.Zm2Jt4zrzIxMZ2LjbK8JdajdCVns-0JjTxYhg8r7UrAg.D7ZSS7L29tvKk_o5qm9lIViBqvcs-ukxJ0NfrqdjyYkg.PNG.dnsjdbstlr/state.png?type=w2)
 	> LOGO_STATE
 	
@@ -52,6 +53,7 @@
 	인게임 화면이 그려지는 STATE입니다. 캐릭터가 죽었을 경우 
 	재도전 / 메인으로 버튼에 따라 STATE를 이동합니다.
 - **캐릭터 STATE 흐름**
+
 ![CHR STATE](https://blogfiles.pstatic.net/MjAyMDEwMTJfMTcx/MDAxNjAyNDczMzU0MDcy.yLVb7uZ0bkeM-FZr8qtwZlmTikCgFoSwL_Me6US32hcg.vDoaRFW0M5lrRMdCAP9YeST6Gb64uAPWEmZqiZvB6xog.PNG.dnsjdbstlr/chrState.png?type=w2)
 	> RUN
 
