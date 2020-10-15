@@ -1,6 +1,6 @@
 import math
 
-# This variables should be modified my yourself
+# This variables should be modified myself
 # Map
 MAPID = 100
 MAP_WIDTH = 800

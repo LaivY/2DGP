@@ -77,15 +77,22 @@ def chr_ladning_check():
 
 def chr_portal_check():
     for portal in m.portalRect:
-        check = False
-        if c.hitBox[2] < portal[0]: check = True
-        if c.hitBox[3] > portal[1]: check = True
-        if c.hitBox[0] > portal[2]: check = True
-        if c.hitBox[1] < portal[3]: check = True
-        if not check:
-            m.id = portal[4]
-            m.tileRect.clear()
-            m.portalRect.clear()
-            m.load_map()
-            c.x, c.y = portal[5], portal[6]
+        PASS = False
+        if c.hitBox[2] < portal[0]: PASS = True
+        if c.hitBox[3] > portal[1]: PASS = True
+        if c.hitBox[0] > portal[2]: PASS = True
+        if c.hitBox[1] < portal[3]: PASS = True
+        if not PASS:
+            # if chr is in destination
+            if m.id == portal[4]:
+                c.subState = 'jump2'
+                c.x, c.y = portal[5], portal[6]
+                print(c.x, c.y)
+            else:
+                m.id = portal[4]
+                m.tileRect.clear()
+                m.portalRect.clear()
+                m.load_map()
+                c.x, c.y = portal[5], portal[6]
+                c.subState = 'jump2'
             return

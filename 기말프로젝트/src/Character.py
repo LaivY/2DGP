@@ -1,7 +1,7 @@
 import Ingame_state
 from pico2d import *
 
-# 모션별 딜레이
+# 모션별 딜레이 :: 캐릭터 스탯 반영
 MOTION_DELAY = {
     'idle': 15,
     'run': 10,
@@ -9,8 +9,20 @@ MOTION_DELAY = {
     'attack1': 15,
     'attack2': 10,
     'attack3': 10,
-    'air_attack1' : 5,
-    'air_attack2' : 10
+    'air_attack1': 5,
+    'air_attack2': 10
+}
+
+# 모션별 딜레이 :: 바뀌지않음
+MOTION_DELAY_ORIGIN = {
+    'idle': 15,
+    'run': 10,
+    'jump': 4,
+    'attack1': 15,
+    'attack2': 10,
+    'attack3': 10,
+    'air_attack1': 5,
+    'air_attack2': 10
 }
 
 # 모션별 프레임 수
@@ -60,18 +72,20 @@ ATTACK1_EXCEPTION = (
 class Character:
     # 50x37
     def __init__(self):
+        ### 캐릭터 시스템 관련 변수들 ###
+        self.image = None
         self.leftKeyDown = False
         self.rightKeyDown = False
 
-        self.state = 'idle'             # 상태
-        self.subState = 'jump'          # 중복 가능 상태
-        self.frame = 0                  # 프레임
-        self.timer = 0                  # 점프 최신화 주기
-        self.dir = 'RIGHT'              # 좌우
-        self.hitBox = ()                # 히트박스
-        self.x, self.y, self.dx, self. dy = 300, 400, 0, 0 # 좌표
-        self.image = None
+        self.frame, self.timer = 0, 0                                           # 프레임, 타이머
+        self.state, self.subState = 'idle', 'jump'                              # 상태, 서브상태
+        self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 300, 400, 0, 0   # 좌우, 좌표와 움직임속도
+        self.hitBox = ()                                                        # 히트박스
 
+        ### 캐릭터 스탯 관련 변수들 ###
+        self.maxHp, self.localMaxHP, self.hp = 50, 50, 50                       # 원래 최대HP, 최종 최대HP, 현재HP
+        self.AD, self.AS, self.DF, self.Speed, = 5, 0, 0, 0                    # 공격력, 공격속도, 방어력, x축 추가 이동속도
+        
     def draw(self):
         # 점프
         if self.subState == 'jump' or self.subState == 'jump2':
@@ -97,9 +111,9 @@ class Character:
         # 일반공격1
         elif self.state == 'attack1':
             if self.dir == 'RIGHT':
-                self.image.clip_draw(self.frame // MOTION_DELAY['attack1'] * 50, 37 * 9, 50, 37, self.x, self.y)
+                self.image.clip_draw(self.frame // (MOTION_DELAY['attack1']) * 50, 37 * 9, 50, 37, self.x, self.y)
             elif self.dir == 'LEFT':
-                self.image.clip_composite_draw(self.frame // MOTION_DELAY['attack1'] * 50, 37 * 9, 50, 37,
+                self.image.clip_composite_draw(self.frame // (MOTION_DELAY['attack1']) * 50, 37 * 9, 50, 37,
                                                0, 'h', self.x, self.y, 50, 37)
         # 일반공격2
         elif self.state == 'attack2':
@@ -129,7 +143,6 @@ class Character:
                 else:
                     self.image.clip_composite_draw((self.frame // MOTION_DELAY['attack3'] - 3) * 50, 37 * 7, 50, 37,
                                                    0, 'h', self.x, self.y, 50, 37)
-
         # 공중공격
         elif self.state == 'air_attack1':
             if self.dir == 'RIGHT':
@@ -142,7 +155,6 @@ class Character:
                     self.image.clip_composite_draw(self.frame // MOTION_DELAY['air_attack1'] * 50 + 50 * 4, 37, 50, 37, 0, 'h', self.x, self.y, 50, 37)
                 else:
                     self.image.clip_composite_draw((self.frame // MOTION_DELAY['air_attack1'] - 3) * 50, 0, 50, 37, 0, 'h', self.x, self.y, 50, 37)
-
         # 공중공격 마무리
         elif self.state == 'air_attack2':
             if self.dir == 'RIGHT':
@@ -151,15 +163,14 @@ class Character:
                 self.image.clip_composite_draw(self.frame // MOTION_DELAY['air_attack2'] * 50, 0, 50, 37, 0, 'h', self.x, self.y, 50, 37)
 
     def update(self, delta_time):
-        # 히트박스 업데이트
+        # Hitbox update
         self.updateHitBox()
-        
-        # 포탈 충돌 체크
-        Ingame_state.chr_portal_check()
 
-        # Chr pos update
+        # Pos update
         self.update_chr_pos(delta_time)
 
+        # Portal check
+        Ingame_state.chr_portal_check()
 
     def eventHandler(self, e):
         # 점프
@@ -222,6 +233,10 @@ class Character:
         elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and (self.subState == 'jump' or self.subState == 'jump2'):
             self.state, self.subState = 'air_attack1', 'none'
             self.frame, self.dx, self.dy = 0, 0, -4
+
+        # 디버그
+        elif (e.key, e.type) == (SDLK_u, SDL_KEYDOWN):
+            self.update_chr_stat()
 
     def update_chr_pos(self, delta_time):
         # 대기
@@ -331,7 +346,7 @@ class Character:
             self.dx, self.dy = Collide_Result[3], Collide_Result[4]
 
         # Chr Pos Update
-        self.x += self.dx
+        self.x += self.dx * (1 + self.Speed / 100)
         self.y += self.dy
 
     def updateHitBox(self):
@@ -349,3 +364,10 @@ class Character:
             else:
                 self.hitBox = (self.x + MOTION_HITBOX[self.state][0], self.y + MOTION_HITBOX[self.state][1],
                                self.x + MOTION_HITBOX[self.state][2], self.y + MOTION_HITBOX[self.state][3])
+
+    def update_chr_stat(self):
+        # 공격속도
+        MOTION_DELAY['attack1'] = int(MOTION_DELAY_ORIGIN['attack1'] * (100 - self.AS) / 100)
+        MOTION_DELAY['attack2'] = int(MOTION_DELAY_ORIGIN['attack2'] * (100 - self.AS) / 100)
+        MOTION_DELAY['attack3'] = int(MOTION_DELAY_ORIGIN['attack3'] * (100 - self.AS) / 100)
+        MOTION_DELAY['air_attack2'] = int(MOTION_DELAY_ORIGIN['air_attack2'] * (100 - self.AS) / 100)

@@ -1,4 +1,5 @@
 from pico2d import *
+debug = False
 
 class Map:
     TileSet = None      # 타일셋 이미지
@@ -88,8 +89,10 @@ class Map:
             temp = i.split()
             if (int(temp[0]), int(temp[1])) in [(9, 0), (10, 0), (10, 1), (11, 0)]: continue
             Map.TileSet.clip_draw(16 * int(temp[0]), 16 * int(temp[1]), 16, 16, int(temp[2]), self.size[1] - int(temp[3]), 32, 32)
-        for i in self.portalRect:
-            draw_rectangle(i[0], i[1], i[2], i[3])
 
-        for i in self.tileRect:
-            draw_rectangle(i[0], i[1], i[2], i[3])
+        if debug:
+            for i in self.portalRect:
+                draw_rectangle(i[0], i[1], i[2], i[3])
+
+            for i in self.tileRect:
+                draw_rectangle(i[0], i[1], i[2], i[3])
