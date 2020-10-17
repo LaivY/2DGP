@@ -22,7 +22,7 @@ MOTION_DELAY_ORIGIN = {
     'attack2': 10,
     'attack3': 10,
     'air_attack1': 5,
-    'air_attack2': 10
+    'air_attack2': 5
 }
 
 # 모션별 프레임 수
@@ -49,6 +49,15 @@ MOTION_HITBOX = {
     'attack3': (5, 37 / 2 - 13, -5, -37 / 2),
     'air_attack1': (8, 37 / 2 - 15, -2, -37 / 2),
     'air_attack2': (5, 37 / 2 - 13, -5, -37 / 2)
+}
+
+# 공격별 범위
+MOTION_HIT_RANGE = {
+    'attack1': (0, 20, 30, -20),
+    'attack2': (0, 20, 30, -20),
+    'attack3': (-35, 3, 35, -19),
+    'air_attack1': (-5, 15, 15, -20),
+    'air_attack2': (-27, -5, 27, -20)
 }
 
 # 달리기 입력 무시
@@ -81,12 +90,15 @@ class Character:
         self.state, self.subState = 'idle', 'jump'                              # 상태, 서브상태
         self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 300, 400, 0, 0   # 좌우, 좌표와 움직임속도
         self.hitBox = ()                                                        # 히트박스
+        self.attack_range = (0, 0, 0, 0)                                        # 공격범위
 
         ### 캐릭터 스탯 관련 변수들 ###
         self.maxHp, self.localMaxHP, self.hp = 50, 50, 50                       # 원래 최대HP, 최종 최대HP, 현재HP
-        self.AD, self.AS, self.DF, self.Speed, = 5, 0, 0, 0                    # 공격력, 공격속도, 방어력, x축 추가 이동속도
+        self.AD, self.AS, self.DF, self.Speed, = 5, 50, 0, 0                    # 공격력, 공격속도, 방어력, x축 추가 이동속도
         
     def draw(self):
+        draw_rectangle(self.attack_range[0], self.attack_range[1], self.attack_range[2], self.attack_range[3])
+
         # 점프
         if self.subState == 'jump' or self.subState == 'jump2':
             if self.dir == 'RIGHT':
@@ -164,10 +176,13 @@ class Character:
 
     def update(self, delta_time):
         # Hitbox update
-        self.updateHitBox()
+        self.update_chr_hitbox()
 
         # Pos update
         self.update_chr_pos(delta_time)
+
+        # Attack range update
+        self.update_chr_attack_range()
 
         # Portal check
         Ingame_state.chr_portal_check()
@@ -265,7 +280,7 @@ class Character:
                 self.frame = 0
 
             # Fallen Check
-            Landing_Result = Ingame_state.chr_ladning_check()
+            Landing_Result = Ingame_state.chr_landing_check()
             if not Landing_Result[0]:
                 self.subState = 'jump'
                 self.frame = 0
@@ -297,7 +312,7 @@ class Character:
                 self.frame = MOTION_DELAY['air_attack1']
 
             # Landing Check
-            Landing_Result = Ingame_state.chr_ladning_check()
+            Landing_Result = Ingame_state.chr_landing_check()
             if Landing_Result[0]:
                 self.state = 'air_attack2'
                 self.frame, self.dy = 0, 0
@@ -324,7 +339,7 @@ class Character:
                 self.frame = (MOTION_FRAME['jump'] - 1) * MOTION_DELAY['jump']
 
             # Landing Check
-            Landing_Result = Ingame_state.chr_ladning_check()
+            Landing_Result = Ingame_state.chr_landing_check()
             if Landing_Result[0]:
                 self.state = 'idle'
                 self.subState = 'none'
@@ -349,7 +364,7 @@ class Character:
         self.x += self.dx * (1 + self.Speed / 100)
         self.y += self.dy
 
-    def updateHitBox(self):
+    def update_chr_hitbox(self):
         if self.dir == 'RIGHT':
             if self.subState == 'jump' or self.subState == 'jump2':
                 self.hitBox = (self.x - MOTION_HITBOX[self.subState][0], self.y + MOTION_HITBOX[self.subState][1],
@@ -371,3 +386,38 @@ class Character:
         MOTION_DELAY['attack2'] = int(MOTION_DELAY_ORIGIN['attack2'] * (100 - self.AS) / 100)
         MOTION_DELAY['attack3'] = int(MOTION_DELAY_ORIGIN['attack3'] * (100 - self.AS) / 100)
         MOTION_DELAY['air_attack2'] = int(MOTION_DELAY_ORIGIN['air_attack2'] * (100 - self.AS) / 100)
+
+    def update_chr_attack_range(self):
+        self.attack_range = (0, 0, 0, 0)
+
+        if self.state == 'attack1':
+            if self.frame > MOTION_DELAY[self.state] * 1.5:
+                if self.dir == 'RIGHT':
+                    self.attack_range = (self.x + MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
+                                         self.x + MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
+                else:
+                    self.attack_range = (self.x - MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
+                                         self.x - MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
+        elif self.state == 'attack2':
+            if self.frame > MOTION_DELAY[self.state] * 5:
+                if self.dir == 'RIGHT':
+                    self.attack_range = (self.x + MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
+                                         self.x + MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
+                else:
+                    self.attack_range = (self.x - MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
+                                         self.x - MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
+        elif self.state == 'attack3':
+            if MOTION_DELAY[self.state] * 2 < self.frame < MOTION_DELAY[self.state] * 4 :
+                if self.dir == 'RIGHT':
+                    self.attack_range = (self.x + MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
+                                         self.x + MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
+                else:
+                    self.attack_range = (self.x - MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
+                                         self.x - MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
+        elif self.state == 'air_attack1' or self.state == 'air_attack2':
+            if self.dir == 'RIGHT':
+                self.attack_range = (self.x + MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
+                                     self.x + MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
+            else:
+                self.attack_range = (self.x - MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
+                                     self.x - MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])

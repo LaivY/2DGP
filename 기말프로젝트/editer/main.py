@@ -3,6 +3,7 @@ from pico2d import *
 
 Canvas_WIDTH = ini.MAP_WIDTH + 192 * 2
 Canvas_HEIGHT = clamp(176 * 2, ini.MAP_HEIGHT, 9999)
+SELECT_TYPE = None
 
 def eventHandler():
     global running
@@ -34,60 +35,93 @@ def drawTileSet():
             draw_rectangle(ini.MAP_WIDTH + 16 + 32 * i - 16, Canvas_HEIGHT - 176 * 2 + 16 + 32 * j - 16,
                            ini.MAP_WIDTH + 16 + 32 * i + 16, Canvas_HEIGHT - 176 * 2 + 16 + 32 * j + 16)
 
+def drawMobSet():
+    for i in range(1):
+        for j in range(1):
+            mob.clip_draw(32 * i, 32 * i, 32, 32, ini.MAP_WIDTH + 16 + 32 * i, Canvas_HEIGHT - 176 * 2 - 16)
+            draw_rectangle(ini.MAP_WIDTH + 32 * i, Canvas_HEIGHT - 176 * 2, ini.MAP_WIDTH + 32 * i + 32, Canvas_HEIGHT - 176 * 2 - 32)
+
 def drawSelection():
+    global SELECT_TYPE
     if ini.selection is not None:
-        tile.clip_draw(16 * ini.selection[0], 16 * ini.selection[1], 16, 16,
-                       ini.mPos[0] // 32 * 32, ini.MAP_HEIGHT - (ini.mPos[1] // 32 * 32), 32, 32)
+        if SELECT_TYPE == 'tile':
+            tile.clip_draw(16 * ini.selection[0], 16 * ini.selection[1], 16, 16,
+                           ini.mPos[0] // 32 * 32, ini.MAP_HEIGHT - (ini.mPos[1] // 32 * 32), 32, 32)
+        elif SELECT_TYPE == 'mob':
+            mob.clip_draw(16 * ini.selection[0], 16 * ini.selection[1], 32, 32,
+                           ini.mPos[0] // 32 * 32, ini.MAP_HEIGHT - (ini.mPos[1] // 32 * 32))
 
 def drawMap():
     for i in ini.DATA:
-        tile.clip_draw(16 * i[0][0], 16 * i[0][1], 16, 16,
-                       i[1], Canvas_HEIGHT - i[2], 32, 32)
+        if i[0] == 't':
+            tile.clip_draw(16 * i[1][0], 16 * i[1][1], 16, 16,
+                           i[2], Canvas_HEIGHT - i[3], 32, 32)
+        elif i[0] == 'm':
+            mob.clip_draw(16 * i[1][0], 16 * i[1][1], 32, 32,
+                           i[2], Canvas_HEIGHT - i[3])
     draw_rectangle(0, Canvas_HEIGHT - 1, ini.MAP_WIDTH, Canvas_HEIGHT - ini.MAP_HEIGHT)
 
 def addData(x, y):
-    # Select
+    global SELECT_TYPE
+
+    # Tile Select
     for i in range(12):
         for j in range(11):
             if 32 * i + ini.MAP_WIDTH <= x <= 32 * i + 32 + ini.MAP_WIDTH and \
-                    32 * j + ini.MAP_HEIGHT - 176 * 2 <= ini.MAP_HEIGHT - y <= 32 * j + 32 + ini.MAP_HEIGHT - 176 * 2:
+               32 * j + ini.MAP_HEIGHT - 176 * 2 <= ini.MAP_HEIGHT - y <= 32 * j + 32 + ini.MAP_HEIGHT - 176 * 2:
                 ini.selection = (i, j)
+                SELECT_TYPE = 'tile'
+                print(i, j, SELECT_TYPE)
+    # Mob Select
+    for i in range(1):
+        for j in range(1):
+            if 32 * i + ini.MAP_WIDTH <= x <= 32 * i + 32 + ini.MAP_WIDTH and \
+                0 <= ini.MAP_HEIGHT - y <= ini.MAP_HEIGHT - 176 * 2:
+                ini.selection = (i, j)
+                SELECT_TYPE = 'mob'
+                print(i, j, SELECT_TYPE)
+
     # Add
     if 0 <= x <= ini.MAP_WIDTH and 0 <= y <= ini.MAP_HEIGHT and ini.selection is not None:
-        # Portal
-        if ini.selection in [(11, 0), (10, 0), (9, 0), (10, 1)]:
-            des = int(input('Destination : '))
-            xPos = int(input('x : '))
-            yPos = int(input('y : '))
-            ini.DATA.append((ini.selection, (x + 16) // 32 * 32, (y + 16) // 32 * 32, des, xPos, yPos))
-        # Normal
-        else:
-            ini.DATA.append((ini.selection, (x + 16) // 32 * 32, (y + 16) // 32 * 32))
+        if SELECT_TYPE == 'tile':
+            # Portal
+            if ini.selection in [(11, 0), (10, 0), (9, 0), (10, 1)]:
+                des = int(input('Destination : '))
+                xPos = int(input('x : '))
+                yPos = int(input('y : '))
+                ini.DATA.append(('t', ini.selection, (x + 16) // 32 * 32, (y + 16) // 32 * 32, des, xPos, yPos))
+            # Normal
+            else:
+                ini.DATA.append(('t', ini.selection, (x + 16) // 32 * 32, (y + 16) // 32 * 32))
+        elif SELECT_TYPE == 'mob':
+            ini.DATA.append(('m', ini.selection, (x + 16) // 32 * 32, (y + 16) // 32 * 32))
 
 def saveData():
     f = open(str(ini.MAPID) + '.txt', 'w')
     f.write(str(ini.MAP_WIDTH) + ' ' + str(ini.MAP_HEIGHT) + '\n')
     for data in ini.DATA:
-        a = data[0][0]
-        b = data[0][1]
-        c = data[1]
+        a = data[0]
+        b = data[1][0]
+        c = data[1][1]
         d = data[2]
-        if (a, b) in [(11, 0), (10, 0), (9, 0), (10, 1)]:
-            f.write(str(a) + ' ' + str(b) + ' ' + str(c) + ' ' + str(d) + ' ' + str(data[3]) + ' ' + str(data[4]) + ' ' + str(data[5]) + '\n')
+        e = data[3]
+        if (b, c) in [(11, 0), (10, 0), (9, 0), (10, 1)]:
+            f.write(str(a) + ' ' + str(b) + ' ' + str(c) + ' ' + str(d) + ' ' + str(e) + ' ' + str(data[3]) + ' ' + str(data[4]) + ' ' + str(data[5]) + '\n')
         else:
-            f.write(str(a) + ' ' + str(b) + ' ' + str(c) + ' ' + str(d) + '\n')
+            f.write(str(a) + ' ' + str(b) + ' ' + str(c) + ' ' + str(d) + ' ' + str(e) + '\n')
     f.close()
     print('저장완료')
-
 
 running = True
 open_canvas(Canvas_WIDTH, Canvas_HEIGHT)
 tile = load_image(ini.path + 'Space_Cave_Tileset.png')
+mob = load_image('mob_sheet.png')
 while running:
     clear_canvas()
 
     drawMap()
     drawTileSet()
+    drawMobSet()
     drawSelection()
     eventHandler()
 

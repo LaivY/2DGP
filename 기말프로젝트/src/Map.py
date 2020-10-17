@@ -1,11 +1,12 @@
 from pico2d import *
+
 debug = False
 
 class Map:
     TileSet = None      # 타일셋 이미지
 
     def __init__(self):
-        self.id = 0             # 맵코드
+        self.id = -1            # 맵코드
         self.size = ()          # 맵크기
         self.tileInfo = []      # 타일종류, 좌표
         self.tileRect = []      # 타일 판정범위
@@ -33,8 +34,9 @@ class Map:
     def createLand(self):
         for i in self.tileInfo:
             f = i.split()
-            type = (int(f[0]), int(f[1]))
-            pos = (int(f[2]), int(f[3]))
+            if f[0] == 'm': continue
+            type = (int(f[1]), int(f[2]))
+            pos  = (int(f[3]), int(f[4]))
 
             # Add tileRect
             if type == (0, 10) or type == (0, 7):
@@ -72,23 +74,25 @@ class Map:
 
             # Add portalRect
             elif type == (9, 0):
-                des, desX, desY = int(f[4]), int(f[5]), int(f[6])
+                des, desX, desY = int(f[5]), int(f[6]), int(f[7])
                 self.portalRect.append((pos[0] - 16, self.size[1] - pos[1] + 16, pos[0], self.size[1] - pos[1] - 16, des, desX, desY))
             elif type == (10, 0):
-                des, desX, desY = int(f[4]), int(f[5]), int(f[6])
+                des, desX, desY = int(f[5]), int(f[6]), int(f[7])
                 self.portalRect.append((pos[0] - 16, self.size[1] - pos[1], pos[0] + 16, self.size[1] - pos[1] - 16, des, desX, desY))
             elif type == (11, 0):
-                des, desX, desY = int(f[4]), int(f[5]), int(f[6])
+                des, desX, desY = int(f[5]), int(f[6]), int(f[7])
                 self.portalRect.append((pos[0], self.size[1] - pos[1] + 16, pos[0] + 16, self.size[1] - pos[1] - 16, des, desX, desY))
             elif type == (10, 1):
-                des, desX, desY = int(f[4]), int(f[5]), int(f[6])
+                des, desX, desY = int(f[5]), int(f[6]), int(f[7])
                 self.portalRect.append((pos[0] - 16, self.size[1] - pos[1] + 16, pos[0] + 16, self.size[1] - pos[1], des, desX, desY))
 
     def draw(self):
         for i in self.tileInfo:
             temp = i.split()
-            if (int(temp[0]), int(temp[1])) in [(9, 0), (10, 0), (10, 1), (11, 0)]: continue
-            Map.TileSet.clip_draw(16 * int(temp[0]), 16 * int(temp[1]), 16, 16, int(temp[2]), self.size[1] - int(temp[3]), 32, 32)
+            if temp[0] == 't' and (int(temp[1]), int(temp[2])) in [(9, 0), (10, 0), (10, 1), (11, 0)]: continue
+
+            elif temp[0] == 't':
+                Map.TileSet.clip_draw(16 * int(temp[1]), 16 * int(temp[2]), 16, 16, int(temp[3]), self.size[1] - int(temp[4]), 32, 32)
 
         if debug:
             for i in self.portalRect:

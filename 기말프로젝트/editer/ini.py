@@ -27,7 +27,7 @@ try:
 except:
     for i in range(math.ceil(MAP_WIDTH / 32) + 1):
         for j in range(math.ceil(MAP_HEIGHT / 32) + 1):
-            DATA.append((BGR, i * 32, j * 32))
+            DATA.append(('t', BGR, i * 32, j * 32))
     print('Create new map. Map code : %d' % MAPID)
 else:
     f.readline()
@@ -35,10 +35,12 @@ else:
     for i in TEMP:
         line = i.split()
         # Portal
-        if (int(line[0]), int(line[1])) in [(11, 0), (10, 0), (9, 0), (10, 1)]:
-            DATA.append(((int(line[0]), int(line[1])), int(line[2]), int(line[3]), int(line[4]), int(line[5]), int(line[6])))
-        # Normal
-        else:
-            DATA.append(((int(line[0]), int(line[1])), int(line[2]), int(line[3])))
+        if line[0] == 't' and (int(line[1]), int(line[2])) in [(11, 0), (10, 0), (9, 0), (10, 1)]:
+            DATA.append(('t', (int(line[1]), int(line[2])), int(line[3]), int(line[4]), int(line[5]), int(line[6]), int(line[7])))
+        # Normal tile
+        elif line[0] == 't':
+            DATA.append(('t', (int(line[1]), int(line[2])), int(line[3]), int(line[4])))
+        elif line[0] == 'm':
+            DATA.append(('m', (int(line[1]), int(line[2])), int(line[3]), int(line[4])))
     f.close()
     print('Load data. Map code : %d' % MAPID)
