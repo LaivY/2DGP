@@ -1,10 +1,11 @@
-from pico2d import *
 import Ingame_state
+from pico2d import *
+from random import randint
 
 # 슬라임 모션 딜레이
 SLIME_MOTION_DELAY = {
     'attack': 15,
-    'die': 15,
+    'die': 30,
     'hit': 15,
     'idle': 15,
     'move': 20
@@ -22,10 +23,9 @@ SLIME_MOTION_FRAME = {
 # 슬라임 모션별 히트박스
 SLIME_MOTION_HITBOX = {
     'attack': (-14, 2, 14, -12),
-    'die': (-16, 8, 16, -8),
-    #'hit': (-16, 8, 16, -8),
+    'die': (-16, 2, 16, -12),
     'hit': (-14, 2, 14, -12),
-    'idle': (-16, 8, 16, -8),
+    'idle': (-16, 2, 16, -12),
     'move': (-14, 2, 14, -12)
 }
 
@@ -87,15 +87,22 @@ class Mob:
             self.image.clip_composite_draw(self.frame // MOTION_DELAY[str(self.id)][self.state] % MOTION_FRAME[str(self.id)][self.state] * 32, 25 * ySheet, 32, 25, 0, 'h', self.x, self.y, 32, 25)
 
     def update(self, delta_time):
-        self.update_mob_order(delta_time)
         self.update_mob_hitbox()
-        self.update_mob_pos(delta_time)
+
+        # 히트 체크
         hit = Ingame_state.mob_hit_check(self.hitBox)
-        if hit[0] and self.state != 'hit':
-            print('%s -> hit' % self.state)
+        if hit[0] and self.hitBy != hit[1]:
             self.state = 'hit'
+            self.hitBy = hit[1]
             self.hp -= hit[2]
-            #print(self.hp, self.hitBy)
+            print(self.hp)
+            if self.hp <= 0:
+                self.state = 'die'
+                self.order = 'none'
+                self.dx = 0
+
+        self.update_mob_order(delta_time)
+        self.update_mob_state(delta_time)
 
     def update_mob_hitbox(self):
         if self.dir == 'LEFT':
@@ -115,16 +122,21 @@ class Mob:
                 self.order = 'approach'
                 self.order_timer = 0
 
-            if self.order_timer < 2:
-                self.dir = 'LEFT'
-                self.state = 'move'
-                self.dx = -1
-            else:
-                self.dir = 'RIGHT'
-                self.state = 'move'
-                self.dx = 1
-                if self.order_timer > 4:
-                    self.order_timer = 0
+            if self.order_timer > 2:
+                self.order_timer = 0
+            if self.order_timer == 0:
+                r = randint(1, 100)
+                if 0 <= r < 33:
+                    self.dir = 'LEFT'
+                    self.state = 'move'
+                    self.dx = -1
+                elif 33 <= r < 66:
+                    self.dir = 'RIGHT'
+                    self.state = 'move'
+                    self.dx = 1
+                else:
+                    self.state = 'idle'
+                    self.dx = 0
 
         # 다가가기
         if self.order == 'approach':
@@ -166,13 +178,16 @@ class Mob:
 
         self.order_timer += delta_time
 
-    def update_mob_pos(self, delta_time):
+    def update_mob_state(self, delta_time):
         self.frame += 1
         if self.frame >= MOTION_FRAME[str(self.id)][self.state] * MOTION_DELAY[str(self.id)][self.state]:
             self.frame = 0
-            if self.state == 'hit':
-                self.state = 'idle'
-                print('hit -> idle')
+            if self.state == 'die':
+                Ingame_state.mob.remove(self)
+                return
+
+        if self.state == 'die':
+            return
 
         # Collide Check
         Collide_Result = Ingame_state.mob_collide_check(self.hitBox, self.dx, self.dy)
@@ -181,7 +196,7 @@ class Mob:
             if Collide_Result[2] != 0: self.y = Collide_Result[2]
             self.dx, self.dy = Collide_Result[3], Collide_Result[4]
 
-        # Fallen Check
+        # Landing Check
         Landing_Result = Ingame_state.mob_landing_check(self.hitBox)
         if Landing_Result[0]:
             self.dy = 0

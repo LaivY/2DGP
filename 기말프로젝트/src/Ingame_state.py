@@ -17,7 +17,10 @@ def eventHandler(e):
 
 def update():
     chr.update(Framework.delta_time)
-    for i in mob: i.update(Framework.delta_time)
+    for i in mob:
+        if chr.state == 'idle':
+            i.hitBy = 'none'
+        i.update(Framework.delta_time)
 
 def draw():
     map.draw()
@@ -133,7 +136,7 @@ def mob_landing_check(hitBox):
     for tile in map.tileRect:
         if (tile[0] < hitBox[0] < tile[2] or tile[0] < hitBox[2] < tile[2]) and \
             hitBox[3] - 2 <= tile[1] <= hitBox[3]:
-            return True, tile[1] + 25 / 2
+            return True, tile[1] + 14
     return [False]
 
 def mob_collide_check(hitBox, dx, dy):
