@@ -1,5 +1,8 @@
 import Ingame_state
+from random import randint
 from pico2d import *
+
+debug = True
 
 # 모션별 딜레이 :: 캐릭터 스탯 반영
 MOTION_DELAY = {
@@ -10,7 +13,8 @@ MOTION_DELAY = {
     'attack2': 10,
     'attack3': 10,
     'air_attack1': 5,
-    'air_attack2': 10
+    'air_attack2': 10,
+    'hit': 10
 }
 
 # 모션별 딜레이 :: 바뀌지않음
@@ -22,7 +26,8 @@ MOTION_DELAY_ORIGIN = {
     'attack2': 10,
     'attack3': 10,
     'air_attack1': 5,
-    'air_attack2': 5
+    'air_attack2': 10,
+    'hit': 20
 }
 
 # 모션별 프레임 수
@@ -34,21 +39,22 @@ MOTION_FRAME = {
     'attack2': 8,
     'attack3': 6,
     'air_attack1': 4,
-    'air_attack2': 4
+    'air_attack2': 4,
+    'hit': 4
 }
 
 # 모션별 히트박스
 MOTION_HITBOX = {
     'idle': (6, 37 / 2 - 7, -6, -37 / 2),
     'run': (0, 37 / 2 - 7, -11, -37 / 2),
-    #'run': (6, 37 / 2 - 7, -5, -37 / 2),
     'jump': (6, 5, -6, -9),
     'jump2': (6, 5, -6, -9),
     'attack1': (5, 37 / 2 - 15, -5, -37 / 2),
     'attack2': (5, 37 / 2 - 13, -5, -37 / 2),
     'attack3': (5, 37 / 2 - 13, -5, -37 / 2),
     'air_attack1': (8, 37 / 2 - 15, -2, -37 / 2),
-    'air_attack2': (5, 37 / 2 - 13, -5, -37 / 2)
+    'air_attack2': (5, 37 / 2 - 13, -5, -37 / 2),
+    'hit': (0, 37 / 2 - 7, 0, -37 / 2)
 }
 
 # 공격별 범위
@@ -63,41 +69,48 @@ MOTION_HIT_RANGE = {
 # 달리기 입력 무시
 RUN_EXCEPTION = (
     'attack1', 'attack2', 'attack3',
-    'air_attack1', 'air_attack2'
+    'air_attack1', 'air_attack2', 'hit'
 )
 
 # 점프 입력 무시
 JUMP_EXCEPTION = (
     'attack1', 'attack2', 'attack3',
-    'air_attack1', 'air_attack2'
+    'air_attack1', 'air_attack2', 'hit'
 )
 
 # 공격 입력 무시
 ATTACK1_EXCEPTION = (
     'attack1', 'attack2', 'attack3',
-    'air_attack1', 'air_attack2'
+    'air_attack1', 'air_attack2', 'hit'
 )
 
 class Character:
     # 50x37
     def __init__(self):
-        ### 캐릭터 시스템 관련 변수들 ###
+        ### 캐릭터 키보드 관련 변수들 ###
         self.image = None
         self.leftKeyDown = False
         self.rightKeyDown = False
 
+        ### 캐릭터 시스템 관련 변수들 ###
         self.frame, self.timer = 0, 0                                           # 프레임, 타이머
         self.state, self.subState = 'idle', 'jump'                              # 상태, 서브상태
         self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 300, 400, 0, 0   # 좌우, 좌표와 움직임속도
-        self.hitBox = ()                                                        # 히트박스
+
+        ### 캐릭터 피격, 공격 관련 변수들 ###
+        self.hitBox = (0, 0, 0, 0)                                              # 히트박스
         self.attack_range = (0, 0, 0, 0)                                        # 공격범위
+        self.invincible_time = 0                                                # 남은 무적 시간
 
         ### 캐릭터 스탯 관련 변수들 ###
         self.maxHp, self.localMaxHP, self.hp = 50, 50, 50                       # 원래 최대HP, 최종 최대HP, 현재HP
-        self.AD, self.AS, self.DF, self.Speed, = 5, 50, 0, 0                    # 공격력, 공격속도, 방어력, x축 추가 이동속도
+        self.AD, self.AS, self.DF, self.Speed, = 5, 0, 0, 0                    # 공격력, 공격속도, 방어력, x축 추가 이동속도
+        self.relic = []                                                         # 유물
         
     def draw(self):
-        draw_rectangle(self.attack_range[0], self.attack_range[1], self.attack_range[2], self.attack_range[3])
+        if debug:
+            draw_rectangle(self.attack_range[0], self.attack_range[1], self.attack_range[2], self.attack_range[3])
+            draw_rectangle(self.hitBox[0], self.hitBox[1], self.hitBox[2], self.hitBox[3])
 
         # 점프
         if self.subState == 'jump' or self.subState == 'jump2':
@@ -109,77 +122,85 @@ class Character:
         # 대기
         elif self.state == 'idle':
             if self.dir == 'RIGHT':
-                self.image.clip_draw(self.frame // MOTION_DELAY['idle'] * 50, 555, 50, 37, self.x, self.y)
+                self.image.clip_draw(self.frame // MOTION_DELAY[self.state] * 50, 555, 50, 37, self.x, self.y)
             elif self.dir == 'LEFT':
-                self.image.clip_composite_draw(self.frame // MOTION_DELAY['idle'] * 50, 37 * 15, 50, 37,
+                self.image.clip_composite_draw(self.frame // MOTION_DELAY[self.state] * 50, 37 * 15, 50, 37,
                                                0, 'h', self.x, self.y, 50, 37)
         # 달리기
         elif self.state == 'run':
             if self.dir == 'RIGHT':
-                self.image.clip_draw(self.frame // MOTION_DELAY['run'] * 50 + 50, 37 * 14, 50, 37, self.x, self.y)
+                self.image.clip_draw(self.frame // MOTION_DELAY[self.state] * 50 + 50, 37 * 14, 50, 37, self.x, self.y)
             elif self.dir == 'LEFT':
-                self.image.clip_composite_draw(self.frame // MOTION_DELAY['run'] * 50 + 50, 37 * 14, 50, 37,
+                self.image.clip_composite_draw(self.frame // MOTION_DELAY[self.state] * 50 + 50, 37 * 14, 50, 37,
                                                0, 'h', self.x, self.y, 50, 37)
         # 일반공격1
         elif self.state == 'attack1':
             if self.dir == 'RIGHT':
-                self.image.clip_draw(self.frame // (MOTION_DELAY['attack1']) * 50, 37 * 9, 50, 37, self.x, self.y)
+                self.image.clip_draw(self.frame // (MOTION_DELAY[self.state]) * 50, 37 * 9, 50, 37, self.x, self.y)
             elif self.dir == 'LEFT':
-                self.image.clip_composite_draw(self.frame // (MOTION_DELAY['attack1']) * 50, 37 * 9, 50, 37,
+                self.image.clip_composite_draw(self.frame // (MOTION_DELAY[self.state]) * 50, 37 * 9, 50, 37,
                                                0, 'h', self.x, self.y, 50, 37)
         # 일반공격2
         elif self.state == 'attack2':
             if self.dir == 'RIGHT':
-                if self.frame // MOTION_DELAY['attack2'] < 4:
-                    self.image.clip_draw(self.frame // MOTION_DELAY['attack2'] * 50 + 50 * 3, 37 * 9, 50, 37, self.x, self.y)
+                if self.frame // MOTION_DELAY[self.state] < 4:
+                    self.image.clip_draw(self.frame // MOTION_DELAY[self.state] * 50 + 50 * 3, 37 * 9, 50, 37, self.x, self.y)
                 else:
-                    self.image.clip_draw((self.frame // MOTION_DELAY['attack2'] - 4) * 50, 37 * 8, 50, 37, self.x, self.y)
+                    self.image.clip_draw((self.frame // MOTION_DELAY[self.state] - 4) * 50, 37 * 8, 50, 37, self.x, self.y)
             elif self.dir == 'LEFT':
-                if self.frame // MOTION_DELAY['attack2'] < 4:
-                    self.image.clip_composite_draw(self.frame // MOTION_DELAY['attack2'] * 50 + 50 * 3, 37 * 9, 50, 37,
+                if self.frame // MOTION_DELAY[self.state] < 4:
+                    self.image.clip_composite_draw(self.frame // MOTION_DELAY[self.state] * 50 + 50 * 3, 37 * 9, 50, 37,
                                                    0, 'h', self.x, self.y, 50, 37)
                 else:
-                    self.image.clip_composite_draw((self.frame // MOTION_DELAY['attack2'] - 4) * 50, 37 * 8, 50, 37,
+                    self.image.clip_composite_draw((self.frame // MOTION_DELAY[self.state] - 4) * 50, 37 * 8, 50, 37,
                                                    0, 'h', self.x, self.y, 50, 37)
         # 일반공격3
         elif self.state == 'attack3':
             if self.dir == 'RIGHT':
-                if self.frame // MOTION_DELAY['attack3'] < 3:
-                    self.image.clip_draw(self.frame // MOTION_DELAY['attack3'] * 50 + 50 * 4, 37 * 8, 50, 37, self.x, self.y)
+                if self.frame // MOTION_DELAY[self.state] < 3:
+                    self.image.clip_draw(self.frame // MOTION_DELAY[self.state] * 50 + 50 * 4, 37 * 8, 50, 37, self.x, self.y)
                 else:
-                    self.image.clip_draw((self.frame // MOTION_DELAY['attack3'] - 3) * 50, 37 * 7, 50, 37, self.x, self.y)
+                    self.image.clip_draw((self.frame // MOTION_DELAY[self.state] - 3) * 50, 37 * 7, 50, 37, self.x, self.y)
             elif self.dir == 'LEFT':
-                if self.frame // MOTION_DELAY['attack3'] < 3:
-                    self.image.clip_composite_draw(self.frame // MOTION_DELAY['attack3'] * 50 + 50 * 4, 37 * 8, 50, 37,
+                if self.frame // MOTION_DELAY[self.state] < 3:
+                    self.image.clip_composite_draw(self.frame // MOTION_DELAY[self.state] * 50 + 50 * 4, 37 * 8, 50, 37,
                                                    0, 'h', self.x, self.y, 50, 37)
                 else:
-                    self.image.clip_composite_draw((self.frame // MOTION_DELAY['attack3'] - 3) * 50, 37 * 7, 50, 37,
+                    self.image.clip_composite_draw((self.frame // MOTION_DELAY[self.state] - 3) * 50, 37 * 7, 50, 37,
                                                    0, 'h', self.x, self.y, 50, 37)
         # 공중공격
         elif self.state == 'air_attack1':
             if self.dir == 'RIGHT':
-                if self.frame // MOTION_DELAY['air_attack1'] < 3:
-                    self.image.clip_draw(self.frame // MOTION_DELAY['air_attack1'] * 50 + 50 * 4, 37, 50, 37, self.x, self.y)
+                if self.frame // MOTION_DELAY[self.state] < 3:
+                    self.image.clip_draw(self.frame // MOTION_DELAY[self.state] * 50 + 50 * 4, 37, 50, 37, self.x, self.y)
                 else:
-                    self.image.clip_draw((self.frame // MOTION_DELAY['air_attack1'] - 3) * 50, 0, 50, 37, self.x, self.y)
+                    self.image.clip_draw((self.frame // MOTION_DELAY[self.state] - 3) * 50, 0, 50, 37, self.x, self.y)
             else:
-                if self.frame // MOTION_DELAY['air_attack1'] < 3:
-                    self.image.clip_composite_draw(self.frame // MOTION_DELAY['air_attack1'] * 50 + 50 * 4, 37, 50, 37, 0, 'h', self.x, self.y, 50, 37)
+                if self.frame // MOTION_DELAY[self.state] < 3:
+                    self.image.clip_composite_draw(self.frame // MOTION_DELAY[self.state] * 50 + 50 * 4, 37, 50, 37, 0, 'h', self.x, self.y, 50, 37)
                 else:
-                    self.image.clip_composite_draw((self.frame // MOTION_DELAY['air_attack1'] - 3) * 50, 0, 50, 37, 0, 'h', self.x, self.y, 50, 37)
+                    self.image.clip_composite_draw((self.frame // MOTION_DELAY[self.state] - 3) * 50, 0, 50, 37, 0, 'h', self.x, self.y, 50, 37)
         # 공중공격 마무리
         elif self.state == 'air_attack2':
             if self.dir == 'RIGHT':
-                self.image.clip_draw(self.frame // MOTION_DELAY['air_attack2'] * 50, 0, 50, 37, self.x, self.y)
+                self.image.clip_draw(self.frame // MOTION_DELAY[self.state] * 50, 0, 50, 37, self.x, self.y)
             else:
-                self.image.clip_composite_draw(self.frame // MOTION_DELAY['air_attack2'] * 50, 0, 50, 37, 0, 'h', self.x, self.y, 50, 37)
+                self.image.clip_composite_draw(self.frame // MOTION_DELAY[self.state] * 50, 0, 50, 37, 0, 'h', self.x, self.y, 50, 37)
+
+        # 피격
+        elif self.state == 'hit':
+            if self.dir == 'RIGHT':
+                self.image.clip_draw(self.frame // MOTION_DELAY[self.state] * 50 + 50 * 3, 37 * 7, 50, 37, self.x, self.y)
+            else:
+                self.image.clip_composite_draw(self.frame // MOTION_DELAY[self.state] * 50 + 50 * 3, 37 * 7, 50, 37, 0, 'h',
+                                               self.x, self.y, 50, 37)
 
     def update(self, delta_time):
-        # Hitbox update
-        self.update_chr_hitbox()
-
         # Pos update
         self.update_chr_pos(delta_time)
+
+        # Hitbox update
+        self.update_chr_hitbox()
 
         # Attack range update
         self.update_chr_attack_range()
@@ -199,7 +220,6 @@ class Character:
             self.subState = 'jump2'
             self.frame, self.timer = 0, 0
             self.y, self.dy = self.y + 5, 5
-
 
         # 왼쪽 달리기
         elif (e.key, e.type) == (SDLK_LEFT, SDL_KEYDOWN):
@@ -249,9 +269,22 @@ class Character:
             self.state, self.subState = 'air_attack1', 'none'
             self.frame, self.dx, self.dy = 0, 0, -4
 
-        # 디버그
-        elif (e.key, e.type) == (SDLK_u, SDL_KEYDOWN):
-            self.update_chr_stat()
+        # 상호작용
+        elif (e.key, e.type) == (SDLK_z, SDL_KEYDOWN) and (self.state == 'idle'):
+            interaction_result = Ingame_state.chr_interaction_check()
+            if interaction_result != (-1, -1):
+                self.interaction_handler(interaction_result)
+
+    def interaction_handler(self, type):
+        if type == (0, 1): # 유물 상자
+            if len(self.relic) >= abs(100 - 105) + 1: return
+            while True:
+                temp = randint(100, 105)
+                if temp not in self.relic:
+                    self.relic.append(temp)
+                    break
+
+        self.update_chr_stat()
 
     def update_chr_pos(self, delta_time):
         # 대기
@@ -272,6 +305,7 @@ class Character:
                     self.frame += 1
                 if self.frame >= MOTION_FRAME['idle'] * MOTION_DELAY['idle']:
                     self.frame = 0
+
         # 달리기
         elif self.state == 'run' and self.subState == 'none':
             self.frame += 1
@@ -324,6 +358,14 @@ class Character:
                 self.state = 'idle'
                 self.frame = 0
 
+        # 피격
+        elif self.state == 'hit':
+            self.frame += 1
+            if self.frame >= MOTION_FRAME['hit'] * MOTION_DELAY['hit']:
+                self.state = 'idle'
+                self.frame = 0
+                self.dx = 0
+
         # 점프
         if self.subState == 'jump' or self.subState == 'jump2':
             self.frame += 1
@@ -353,6 +395,12 @@ class Character:
                 elif self.rightKeyDown:
                     self.dx = 2
 
+        # 무적시간 감소
+        if self.invincible_time > 0:
+            self.invincible_time -= delta_time
+            if self.invincible_time < 0:
+                self.invincible_time = 0
+
         # Collide Check
         Collide_Result = Ingame_state.chr_collide_check()
         if Collide_Result[0]:
@@ -381,6 +429,15 @@ class Character:
                                self.x + MOTION_HITBOX[self.state][2], self.y + MOTION_HITBOX[self.state][3])
 
     def update_chr_stat(self):
+        # 계산 전에 캐릭터 스탯 초기화
+        self.maxHp, self.localMaxHP, self.hp = 50, 50, 50
+        self.AD, self.AS, self.DF, self.Speed, = 5, 0, 0, 0
+
+        # 유물로 인한 스탯 상승
+        for relic in self.relic:
+            if relic == 101:
+                self.AD += 1
+
         # 공격속도
         MOTION_DELAY['attack1'] = int(MOTION_DELAY_ORIGIN['attack1'] * (100 - self.AS) / 100)
         MOTION_DELAY['attack2'] = int(MOTION_DELAY_ORIGIN['attack2'] * (100 - self.AS) / 100)

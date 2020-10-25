@@ -1,13 +1,14 @@
 import Framework
+import UI
 from pico2d import *
 from Map import Map
-from Character import Character
 from Mob import Mob
+from Character import Character
 
 # Create
+mob = []
 map = Map()
 chr = Character()
-mob = []
 
 def eventHandler(e):
     if e.type == SDL_QUIT or (e.type, e.key) == (SDL_KEYDOWN, SDLK_ESCAPE):
@@ -26,12 +27,14 @@ def draw():
     map.draw()
     for i in mob: i.draw()
     chr.draw()
+    UI.draw()
 
 def enter():
     chr.image = load_image('../res/adventurer-v1.5-Sheet.png')
     if map.id < 0: map.id = 100
     map.load_map()
     load_mob()
+    UI.load()
 
 def load_mob():
     file = open('../res/Map/' + str(map.id) + '.txt', 'r')
@@ -116,6 +119,12 @@ def chr_portal_check():
                 chr.x, chr.y = portal[5], portal[6]
             return
 
+def chr_interaction_check():
+    for obj in map.objectRect:
+        if obj[0] <= chr.x <= obj[2] and obj[3] <= chr.y - 10 <= obj[1]:
+            return obj[4], obj[5]
+    return -1, -1
+
 def mob_hit_check(hitBox):
     HIT = False
     if chr.attack_range == (0, 0, 0, 0):
@@ -132,11 +141,11 @@ def mob_hit_check(hitBox):
         return [True, chr.state, chr.AD]
     return [False]
 
-def mob_landing_check(hitBox):
+def mob_landing_check(hitBox, x, dy):
     for tile in map.tileRect:
-        if (tile[0] < hitBox[0] < tile[2] or tile[0] < hitBox[2] < tile[2]) and \
-            hitBox[3] - 2 <= tile[1] <= hitBox[3]:
-            return True, tile[1] + 14
+        if (tile[0] < hitBox[0] < tile[2] or tile[0] < hitBox[2] < tile[2] or tile[0] < x < tile[2]) and \
+            hitBox[3] + dy * 2 <= tile[1] <= hitBox[3]:
+            return True, tile[1] + abs(hitBox[1] - hitBox[3]) - 2
     return [False]
 
 def mob_collide_check(hitBox, dx, dy):
@@ -159,6 +168,12 @@ def mob_collide_check(hitBox, dx, dy):
              (max(hitBox[0], hitBox[2]) <= tile[0] <= max(hitBox[0], hitBox[2]) + dx or
               tile[0] < max(hitBox[0], hitBox[2]) + dx < tile[2]) and dx > 0:
             RESULT = [True, RESULT[1] + tile[0] - (abs(hitBox[0] - hitBox[2]) / 2), RESULT[2], RESULT[3], RESULT[4]]
+
+        # 맵밖으로 나가는 것 체크
+        if max(hitBox[0], hitBox[2]) + dx >= map.size[0]:
+            RESULT = [True, map.size[0] - (abs(hitBox[0] - hitBox[2]) / 2), RESULT[2], RESULT[3], RESULT[4]]
+        elif min(hitBox[0], hitBox[2]) - dx <= 0:
+            RESULT = [True, abs(hitBox[0] - hitBox[2]) / 2, RESULT[2], RESULT[3], RESULT[4]]
 
         if RESULT[0]: return RESULT
     return [False]

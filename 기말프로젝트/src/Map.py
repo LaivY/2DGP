@@ -11,11 +11,12 @@ class Map:
         self.tileInfo = []      # 타일종류, 좌표
         self.tileRect = []      # 타일 판정범위
         self.portalRect = []    # 포탈 판정범위
+        self.objectRect = []    # 상호작용 오브젝트 판정범위
 
     def load_map(self):
         # TileSet load
         if Map.TileSet is None:
-            Map.TileSet = load_image('../res/Map/Space_Cave_Tileset.png')
+            Map.TileSet = load_image('../res/Space_Cave_Tileset.png')
 
         # Map file load
         file = open('../res/Map/' + str(self.id) + '.txt', 'r')
@@ -86,6 +87,10 @@ class Map:
                 des, desX, desY = int(f[5]), int(f[6]), int(f[7])
                 self.portalRect.append((pos[0] - 16, self.size[1] - pos[1] + 16, pos[0] + 16, self.size[1] - pos[1], des, desX, desY))
 
+            # Add objectRect
+            if type == (0, 1):
+                self.objectRect.append((pos[0] - 8, self.size[1] - pos[1], pos[0] + 10, self.size[1] - pos[1] - 16, type[0], type[1]))
+
     def draw(self):
         for i in self.tileInfo:
             temp = i.split()
@@ -99,4 +104,7 @@ class Map:
                 draw_rectangle(i[0], i[1], i[2], i[3])
 
             for i in self.tileRect:
+                draw_rectangle(i[0], i[1], i[2], i[3])
+
+            for i in self.objectRect:
                 draw_rectangle(i[0], i[1], i[2], i[3])
