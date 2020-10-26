@@ -1,8 +1,8 @@
 import Framework
 import UI
 from pico2d import *
-from Map import Map
 from Mob import Mob
+from Map import Map
 from Character import Character
 
 # Create

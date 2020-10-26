@@ -54,7 +54,7 @@ MOTION_HITBOX = {
     'attack3': (5, 37 / 2 - 13, -5, -37 / 2),
     'air_attack1': (8, 37 / 2 - 15, -2, -37 / 2),
     'air_attack2': (5, 37 / 2 - 13, -5, -37 / 2),
-    'hit': (0, 37 / 2 - 7, 0, -37 / 2)
+    'hit': (10, 37 / 2 - 7, 0, -37 / 2)
 }
 
 # 공격별 범위
@@ -104,7 +104,7 @@ class Character:
 
         ### 캐릭터 스탯 관련 변수들 ###
         self.maxHp, self.localMaxHP, self.hp = 50, 50, 50                       # 원래 최대HP, 최종 최대HP, 현재HP
-        self.AD, self.AS, self.DF, self.Speed, = 5, 0, 0, 0                    # 공격력, 공격속도, 방어력, x축 추가 이동속도
+        self.AD, self.AS, self.DF, self.Speed, = 5, 0, 0, 0                     # 공격력, 공격속도, 방어력, x축 추가 이동속도
         self.relic = []                                                         # 유물
         
     def draw(self):
@@ -194,19 +194,6 @@ class Character:
             else:
                 self.image.clip_composite_draw(self.frame // MOTION_DELAY[self.state] * 50 + 50 * 3, 37 * 7, 50, 37, 0, 'h',
                                                self.x, self.y, 50, 37)
-
-    def update(self, delta_time):
-        # Pos update
-        self.update_chr_pos(delta_time)
-
-        # Hitbox update
-        self.update_chr_hitbox()
-
-        # Attack range update
-        self.update_chr_attack_range()
-
-        # Portal check
-        Ingame_state.chr_portal_check()
 
     def eventHandler(self, e):
         # 점프
@@ -430,15 +417,18 @@ class Character:
 
     def update_chr_stat(self):
         # 계산 전에 캐릭터 스탯 초기화
-        self.maxHp, self.localMaxHP, self.hp = 50, 50, 50
+        self.maxHp, self.localMaxHP = 50, 50
         self.AD, self.AS, self.DF, self.Speed, = 5, 0, 0, 0
 
         # 유물로 인한 스탯 상승
         for relic in self.relic:
+            if relic == 100:
+                self.localMaxHP += 10
+                self.hp += 10
             if relic == 101:
                 self.AD += 1
 
-        # 공격속도
+        # 공격속도 적용
         MOTION_DELAY['attack1'] = int(MOTION_DELAY_ORIGIN['attack1'] * (100 - self.AS) / 100)
         MOTION_DELAY['attack2'] = int(MOTION_DELAY_ORIGIN['attack2'] * (100 - self.AS) / 100)
         MOTION_DELAY['attack3'] = int(MOTION_DELAY_ORIGIN['attack3'] * (100 - self.AS) / 100)
@@ -447,34 +437,27 @@ class Character:
     def update_chr_attack_range(self):
         self.attack_range = (0, 0, 0, 0)
 
-        if self.state == 'attack1':
-            if self.frame > MOTION_DELAY[self.state] * 1.5:
-                if self.dir == 'RIGHT':
-                    self.attack_range = (self.x + MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
-                                         self.x + MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
-                else:
-                    self.attack_range = (self.x - MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
-                                         self.x - MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
-        elif self.state == 'attack2':
-            if self.frame > MOTION_DELAY[self.state] * 5:
-                if self.dir == 'RIGHT':
-                    self.attack_range = (self.x + MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
-                                         self.x + MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
-                else:
-                    self.attack_range = (self.x - MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
-                                         self.x - MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
-        elif self.state == 'attack3':
-            if MOTION_DELAY[self.state] * 2 < self.frame < MOTION_DELAY[self.state] * 4 :
-                if self.dir == 'RIGHT':
-                    self.attack_range = (self.x + MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
-                                         self.x + MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
-                else:
-                    self.attack_range = (self.x - MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
-                                         self.x - MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
-        elif self.state == 'air_attack1' or self.state == 'air_attack2':
+        if (self.state == 'attack1' and self.frame > MOTION_DELAY['attack1'] * 1.5) or \
+           (self.state == 'attack2' and self.frame > MOTION_DELAY['attack2'] * 5) or \
+           (self.state == 'attack3' and MOTION_DELAY['attack3'] * 2 < self.frame < MOTION_DELAY['attack3'] * 4) or \
+           (self.state == 'air_attack1') or \
+           (self.state == 'air_attack2'):
             if self.dir == 'RIGHT':
                 self.attack_range = (self.x + MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
                                      self.x + MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
             else:
                 self.attack_range = (self.x - MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
                                      self.x - MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])
+
+    def update(self, delta_time):
+        # Pos update
+        self.update_chr_pos(delta_time)
+
+        # Hitbox update
+        self.update_chr_hitbox()
+
+        # Attack range update
+        self.update_chr_attack_range()
+
+        # Portal check
+        Ingame_state.chr_portal_check()

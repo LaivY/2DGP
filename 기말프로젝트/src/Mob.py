@@ -105,14 +105,6 @@ class Mob:
         else:
             self.image.clip_composite_draw(self.frame // MOTION_DELAY[str(self.id)][self.state] % MOTION_FRAME[str(self.id)][self.state] * 32, 25 * ySheet, 32, 25, 0, 'h', self.x, self.y, 32, 25)
 
-    def update(self, delta_time):
-        self.update_mob_order(delta_time)
-        self.update_mob_state()
-        self.update_mob_hitbox()
-        self.update_mob_hit_check()
-        self.update_mob_attack_range()
-        self.update_mob_attack_chr_check()
-
     def update_mob_hitbox(self):
         if self.dir == 'LEFT':
             self.hitBox = (self.x + MOTION_HITBOX[str(self.id)][self.state][0], self.y + MOTION_HITBOX[str(self.id)][self.state][1],
@@ -123,28 +115,30 @@ class Mob:
 
     def update_mob_hit_check(self):
         hit = Ingame_state.mob_hit_check(self.hitBox)
-        if hit[0] and self.hitBy != hit[1]:
+        if hit[0] and self.hitBy != hit[1] and self.state != 'die':
             self.state = 'hit'
+            self.frame = 0
             self.dx = 0
             self.hitBy = hit[1]
             self.hp -= hit[2]
             if self.hp <= 0:
                 self.state = 'die'
                 self.order = 'none'
+                self.frame = 0
             if debug:
                 print('몬스터 HP : %d' % self.hp)
 
     def update_mob_order(self, delta_time):
-        # 만약 발견 범위 안에 있다면 approach 명령
-        if ((self.dir == 'LEFT' and self.x  > Ingame_state.chr.x and self.x - Ingame_state.chr.x > 80 and abs(self.y - Ingame_state.chr.y) < 30) or
-           (self.dir == 'RIGHT' and self.x < Ingame_state.chr.x and Ingame_state.chr.x - self.x < 80 and abs(self.y - Ingame_state.chr.y) < 30)) and \
-            self.state != 'attack' and self.state != 'die':
-            self.frame = 0
-            self.order = 'approach'
-            self.order_timer = 0
-
         # 순찰
         if self.order == 'patrol':
+            # 만약 발견 범위 안에 있다면 approach 명령
+            if ((self.dir == 'LEFT' and 0 < self.x - Ingame_state.chr.x < 150 and abs(self.y - Ingame_state.chr.y) < 30) or
+               (self.dir == 'RIGHT' and 0 < Ingame_state.chr.x - self.x < 150 and abs(self.y - Ingame_state.chr.y) < 30)) and self.state != 'attack':
+                self.frame = 0
+                self.order = 'approach'
+                self.order_timer = 0
+
+            # 2초마다 순찰 방향 바꿈
             if self.order_timer > 2:
                 self.order_timer = 0
             if self.order_timer == 0:
@@ -164,7 +158,7 @@ class Mob:
         # 다가가기
         if self.order == 'approach':
             # 만약 발견 범위 밖에 있다면 wait 명령
-            if abs(Ingame_state.chr.x - self.x) > 50 and abs(Ingame_state.chr.y - self.y) > 80:
+            if abs(Ingame_state.chr.x - self.x) > 150 or abs(Ingame_state.chr.y - self.y) > 30:
                 self.frame = 0
                 self.order = 'wait'
                 self.order_timer = 0
@@ -188,9 +182,6 @@ class Mob:
         if self.order == 'attack':
             self.state = 'attack'
             self.dx = 0
-            if self.order_timer > 1:
-                self.order = 'approach'
-                self.order_timer = 0
 
         # 대기
         if self.order == 'wait':
@@ -201,10 +192,16 @@ class Mob:
 
         self.order_timer += delta_time
 
-    def update_mob_state(self):
+    def update_mob_pos(self):
         self.frame += 1
-        if self.frame >= MOTION_FRAME[str(self.id)][self.state] * MOTION_DELAY[str(self.id)][self.state]:
+        if self.frame >= MOTION_FRAME[str(self.id)][self.state] * (MOTION_DELAY[str(self.id)][self.state]):
             self.frame = 0
+            if self.state == 'attack' or self.state == 'hit':
+                self.frame = 0
+                self.state = 'move'
+                self.order = 'approach'
+                self.order_timer = 0
+
             if self.state == 'die':
                 Ingame_state.mob.remove(self)
                 return
@@ -270,3 +267,11 @@ class Mob:
             Ingame_state.chr.invincible_time = 1
             if debug:
                 print('캐릭터 HP : %d' % Ingame_state.chr.hp)
+
+    def update(self, delta_time):
+        self.update_mob_order(delta_time)
+        self.update_mob_pos()
+        self.update_mob_hitbox()
+        self.update_mob_hit_check()
+        self.update_mob_attack_range()
+        self.update_mob_attack_chr_check()
