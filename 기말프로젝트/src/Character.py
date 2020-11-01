@@ -293,6 +293,11 @@ class Character:
                 if self.frame >= MOTION_FRAME['idle'] * MOTION_DELAY['idle']:
                     self.frame = 0
 
+            # Fallen Check
+            Landing_Result = Ingame_state.chr_landing_check()
+            if not Landing_Result[0]:
+                self.subState = 'jump'
+
         # 달리기
         elif self.state == 'run' and self.subState == 'none':
             self.frame += 1
@@ -441,7 +446,7 @@ class Character:
            (self.state == 'attack2' and self.frame > MOTION_DELAY['attack2'] * 5) or \
            (self.state == 'attack3' and MOTION_DELAY['attack3'] * 2 < self.frame < MOTION_DELAY['attack3'] * 4) or \
            (self.state == 'air_attack1') or \
-           (self.state == 'air_attack2'):
+           (self.state == 'air_attack2') and self.frame < MOTION_DELAY['air_attack2'] * 3:
             if self.dir == 'RIGHT':
                 self.attack_range = (self.x + MOTION_HIT_RANGE[self.state][0], self.y + MOTION_HIT_RANGE[self.state][1],
                                      self.x + MOTION_HIT_RANGE[self.state][2], self.y + MOTION_HIT_RANGE[self.state][3])

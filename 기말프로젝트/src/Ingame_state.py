@@ -46,6 +46,8 @@ def load_mob():
         if temp[0] == 'm':
             if (int(temp[1]), int(temp[2])) == (0, 0):
                 mob.append(Mob(100, int(temp[3]), int(temp[4])))
+            elif (int(temp[1]), int(temp[2])) == (0, 1):
+                mob.append(Mob(101, int(temp[3]), int(temp[4])))
     for i in mob: i.load()
 
 def chr_collide_check():
@@ -145,7 +147,7 @@ def mob_landing_check(hitBox, x, dy):
     for tile in map.tileRect:
         if (tile[0] < hitBox[0] < tile[2] or tile[0] < hitBox[2] < tile[2] or tile[0] < x < tile[2]) and \
             hitBox[3] + dy * 2 <= tile[1] <= hitBox[3]:
-            return True, tile[1] + abs(hitBox[1] - hitBox[3]) - 2
+            return True, tile[1] + abs(hitBox[1] - hitBox[3])
     return [False]
 
 def mob_collide_check(hitBox, dx, dy):
