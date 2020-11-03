@@ -3,9 +3,11 @@ from pico2d import *
 
 GameState = []
 delta_time = 0
+FrameStack = 0
+FPS = 60
 running = True
 def run(state):
-    global GameState, running, delta_time
+    global GameState, running, delta_time, FPS, FrameStack
     GameState = [state]
     last_time = time.time()
 
@@ -18,6 +20,7 @@ def run(state):
         now = time.time()
         delta_time = now - last_time
         last_time = now
+        FrameStack += delta_time
 
         # Event Handling
         evts = get_events()
@@ -30,7 +33,11 @@ def run(state):
         GameState[-1].draw()
 
         update_canvas()
+
         delay(0.01)
+
+        #delay(delta_time / 2.2)
+        #print(delta_time / 2.2)
 
     close_canvas()
 

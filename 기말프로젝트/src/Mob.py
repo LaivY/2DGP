@@ -43,7 +43,7 @@ SLIME_ATTACK_RANGE = {
 
 # 까시
 NEEDLE_YSHEET = {
-    'attack':3,
+    'attack': 3,
     'die': 2,
     'hit': 2,
     'idle': 1,
@@ -55,7 +55,7 @@ NEEDLE_MOTION_DELAY = {
     'die': 10,
     'hit': 15,
     'idle': 15,
-    'move': 20
+    'move': 10
 }
 
 NEEDLE_MOTION_FRAME = {
@@ -149,7 +149,7 @@ class Mob:
             self.xSize, self.ySize = 32, 25
             self.sxSize, self.sySize = 32, 25
             self.maxHp, self.hp = 50, 50
-            self.AD, self.DF, self.Speed = 1, 0, 0
+            self.AD, self.DF, self.Speed = 25, 0, 0
 
         elif self.id == 101:
             self.image = Mob.needle_slime_image
@@ -350,8 +350,9 @@ class Mob:
                     Ingame_state.chr.dx = -0.1
                     Ingame_state.chr.dir = 'RIGHT'
 
-            Ingame_state.chr.hp -= self.AD
             Ingame_state.chr.invincible_time = 1
+            Ingame_state.chr.hp -= self.AD
+
             if debug:
                 print('캐릭터 HP : %d' % Ingame_state.chr.hp)
 

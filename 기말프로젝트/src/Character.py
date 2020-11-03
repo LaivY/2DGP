@@ -14,7 +14,8 @@ MOTION_DELAY = {
     'attack3': 10,
     'air_attack1': 5,
     'air_attack2': 10,
-    'hit': 10
+    'hit': 10,
+    'die': 20
 }
 
 # 모션별 딜레이 :: 바뀌지않음
@@ -27,7 +28,8 @@ MOTION_DELAY_ORIGIN = {
     'attack3': 10,
     'air_attack1': 5,
     'air_attack2': 10,
-    'hit': 20
+    'hit': 20,
+    'die': 20
 }
 
 # 모션별 프레임 수
@@ -40,7 +42,8 @@ MOTION_FRAME = {
     'attack3': 6,
     'air_attack1': 4,
     'air_attack2': 4,
-    'hit': 4
+    'hit': 4,
+    'die': 5
 }
 
 # 모션별 히트박스
@@ -54,7 +57,8 @@ MOTION_HITBOX = {
     'attack3': (5, 37 / 2 - 13, -5, -37 / 2),
     'air_attack1': (8, 37 / 2 - 15, -2, -37 / 2),
     'air_attack2': (5, 37 / 2 - 13, -5, -37 / 2),
-    'hit': (10, 37 / 2 - 7, 0, -37 / 2)
+    'hit': (10, 37 / 2 - 7, 0, -37 / 2),
+    'die': (0, 0, 0, 0)
 }
 
 # 공격별 범위
@@ -91,6 +95,7 @@ class Character:
         self.image = None
         self.leftKeyDown = False
         self.rightKeyDown = False
+        self.attackKeyDown = False
 
         ### 캐릭터 시스템 관련 변수들 ###
         self.frame, self.timer = 0, 0                                           # 프레임, 타이머
@@ -195,7 +200,16 @@ class Character:
                 self.image.clip_composite_draw(self.frame // MOTION_DELAY[self.state] * 50 + 50 * 3, 37 * 7, 50, 37, 0, 'h',
                                                self.x, self.y, 50, 37)
 
+        # 사망
+        elif self.state == 'die':
+            if self.dir == 'RIGHT':
+                self.image.clip_draw(self.frame // MOTION_DELAY[self.state] * 50, 37 * 6, 50, 37, self.x, self.y)
+
     def eventHandler(self, e):
+        # 죽은 상태일 경우 키입력 무시
+        if self.hp <= 0:
+            return
+
         # 점프
         if (e.key, e.type) == (SDLK_c, SDL_KEYDOWN) and self.state not in JUMP_EXCEPTION and self.subState == 'none':
             self.subState = 'jump'
@@ -236,18 +250,25 @@ class Character:
                 self.state = 'idle'
                 self.dx = 0
 
+        # 상호작용
+        elif (e.key, e.type) == (SDLK_z, SDL_KEYDOWN) and (self.state == 'idle'):
+            interaction_result = Ingame_state.chr_interaction_check()
+            if interaction_result != (-1, -1):
+                self.interaction_handler(interaction_result)
+
         # 기본공격 1타
-        elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state not in ATTACK1_EXCEPTION and self.subState == 'none':
+        elif ((e.key, e.type) == (SDLK_x, SDL_KEYDOWN) or self.attackKeyDown) and self.state not in ATTACK1_EXCEPTION and self.subState == 'none':
             self.state = 'attack1'
             self.frame, self.dx = 0, 0
+            self.attackKeyDown = True
 
         # 기본공격 2타
-        elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state == 'attack1' and self.frame >= (MOTION_FRAME['attack1'] - 0.8) * MOTION_DELAY['attack1']:
+        elif ((e.key, e.type) == (SDLK_x, SDL_KEYDOWN) or self.attackKeyDown) and self.state == 'attack1' and self.frame >= (MOTION_FRAME['attack1'] - 0.8) * MOTION_DELAY['attack1']:
             self.state = 'attack2'
             self.frame = 0
 
         # 기본공격 3타
-        elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and self.state == 'attack2' and self.frame >= (MOTION_FRAME['attack2'] - 2) * MOTION_DELAY['attack2']:
+        elif ((e.key, e.type) == (SDLK_x, SDL_KEYDOWN) or self.attackKeyDown) and self.state == 'attack2' and self.frame >= (MOTION_FRAME['attack2'] - 2) * MOTION_DELAY['attack2']:
             self.state = 'attack3'
             self.frame = 0
 
@@ -255,12 +276,11 @@ class Character:
         elif (e.key, e.type) == (SDLK_x, SDL_KEYDOWN) and (self.subState == 'jump' or self.subState == 'jump2'):
             self.state, self.subState = 'air_attack1', 'none'
             self.frame, self.dx, self.dy = 0, 0, -4
+            self.attackKeyDown = True
 
-        # 상호작용
-        elif (e.key, e.type) == (SDLK_z, SDL_KEYDOWN) and (self.state == 'idle'):
-            interaction_result = Ingame_state.chr_interaction_check()
-            if interaction_result != (-1, -1):
-                self.interaction_handler(interaction_result)
+        # 공격키업
+        if (e.key, e.type) == (SDLK_x, SDL_KEYUP):
+            self.attackKeyDown = False
 
     def interaction_handler(self, type):
         if type == (0, 1): # 유물 상자
@@ -274,6 +294,8 @@ class Character:
         self.update_chr_stat()
 
     def update_chr_pos(self, delta_time):
+        self.frame += 1
+
         # 대기
         if self.state == 'idle':
             if self.rightKeyDown:
@@ -287,21 +309,17 @@ class Character:
                 if not Ingame_state.chr_collide_check()[0]:
                     self.dx = -2
             else:
-                # If it doesn't exist, frame goes up twice when I jump.
-                if self.subState == 'none':
-                    self.frame += 1
                 if self.frame >= MOTION_FRAME['idle'] * MOTION_DELAY['idle']:
                     self.frame = 0
 
             # Fallen Check
             Landing_Result = Ingame_state.chr_landing_check()
             if not Landing_Result[0]:
-                self.subState = 'jump'
+                if self.subState != 'jump2':
+                    self.subState = 'jump'
 
         # 달리기
         elif self.state == 'run' and self.subState == 'none':
-            self.frame += 1
-
             if self.frame >= MOTION_FRAME['run'] * MOTION_DELAY['run']:
                 self.frame = 0
 
@@ -313,24 +331,20 @@ class Character:
 
         # 공격
         elif self.state == 'attack1':
-            self.frame += 1
             if self.frame >= MOTION_FRAME['attack1'] * MOTION_DELAY['attack1']:
                 self.frame = 0
                 self.state = 'idle'
         elif self.state == 'attack2':
-            self.frame += 1
             if self.frame >= MOTION_FRAME['attack2'] * MOTION_DELAY['attack2']:
                 self.frame = 0
                 self.state = 'idle'
         elif self.state == 'attack3':
-            self.frame += 1
             if self.frame >= MOTION_FRAME['attack3'] * MOTION_DELAY['attack3']:
                 self.frame = 0
                 self.state = 'idle'
 
         # 공중공격
         elif self.state == 'air_attack1':
-            self.frame += 1
             self.dy -= 0.05
 
             # Frame Repeat
@@ -345,23 +359,27 @@ class Character:
                 self.y = Landing_Result[1]
 
         elif self.state == 'air_attack2':
-            self.frame += 1
+            #self.frame += 1
             if self.frame >= MOTION_FRAME['air_attack2'] * MOTION_DELAY['air_attack2']:
                 self.state = 'idle'
                 self.frame = 0
 
         # 피격
         elif self.state == 'hit':
-            self.frame += 1
             if self.frame >= MOTION_FRAME['hit'] * MOTION_DELAY['hit']:
                 self.state = 'idle'
                 self.frame = 0
                 self.dx = 0
+                if self.hp <= 0:
+                    self.state = 'die'
+
+        # 사망
+        elif self.state == 'die':
+            if self.frame >= MOTION_FRAME['die'] * MOTION_DELAY['die']:
+                self.frame = MOTION_FRAME['die'] * MOTION_DELAY['die']
 
         # 점프
         if self.subState == 'jump' or self.subState == 'jump2':
-            self.frame += 1
-
             # update Cycle
             self.timer += delta_time
             if self.timer > delta_time * 5:
@@ -430,7 +448,7 @@ class Character:
             if relic == 100:
                 self.localMaxHP += 10
                 self.hp += 10
-            if relic == 101:
+            elif relic == 101:
                 self.AD += 1
 
         # 공격속도 적용
