@@ -189,12 +189,13 @@ class Mob:
             self.dx = 0
             self.hitBy = hit[1]
             self.hp -= hit[2]
-            if self.hp <= 0:
-                self.state = 'die'
-                self.order = 'none'
-                self.frame = 0
-            if debug:
-                print('몬스터 HP : %d' % self.hp)
+
+        if self.state != 'die' and self.hp <= 0:
+            self.state = 'die'
+            self.order = 'none'
+            self.frame = 0
+        #if debug:
+        #    print('몬스터 HP : %d' % self.hp)
 
     def update_mob_order(self, delta_time):
         # 순찰
@@ -352,6 +353,11 @@ class Mob:
 
             Ingame_state.chr.invincible_time = 1
             Ingame_state.chr.hp -= self.AD
+
+            if 103 in Ingame_state.chr.relic:
+                self.hp -= 999
+                if debug:
+                    print('유물로인한 반사피해')
 
             if debug:
                 print('캐릭터 HP : %d' % Ingame_state.chr.hp)
