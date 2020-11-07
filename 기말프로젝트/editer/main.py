@@ -106,7 +106,7 @@ def saveData():
         d = data[2]
         e = data[3]
         if (b, c) in [(11, 0), (10, 0), (9, 0), (10, 1)]:
-            f.write(str(a) + ' ' + str(b) + ' ' + str(c) + ' ' + str(d) + ' ' + str(e) + ' ' + str(data[3]) + ' ' + str(data[4]) + ' ' + str(data[5]) + '\n')
+            f.write(str(a) + ' ' + str(b) + ' ' + str(c) + ' ' + str(d) + ' ' + str(e) + ' ' + str(data[4]) + ' ' + str(data[5]) + ' ' + str(data[6]) + '\n')
         else:
             f.write(str(a) + ' ' + str(b) + ' ' + str(c) + ' ' + str(d) + ' ' + str(e) + '\n')
     f.close()
@@ -114,7 +114,7 @@ def saveData():
 
 running = True
 open_canvas(Canvas_WIDTH, Canvas_HEIGHT)
-tile = load_image(ini.path + 'Space_Cave_Tileset.png')
+tile = load_image(ini.path + 'tileSet.png')
 mob = load_image('mob_sheet.png')
 while running:
     clear_canvas()

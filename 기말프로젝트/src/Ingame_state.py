@@ -16,6 +16,8 @@ def eventHandler(e):
     # 캐릭터 이벤트처리
     chr.eventHandler(e)
 
+    # UI 이벤트처리
+
 def update():
     chr.update(Framework.delta_time)
     for i in mob:
@@ -112,6 +114,12 @@ def chr_portal_check():
                 chr.subState = 'jump2'
                 chr.x, chr.y = portal[5], portal[6]
             else:
+                # 유물 :: 조개화석
+                for r in chr.relic:
+                    if r.id == 108:
+                        r.stack = 1
+                        r.isActive = True
+
                 map.id = portal[4]
                 map.tileRect.clear()
                 map.portalRect.clear()

@@ -1,15 +1,30 @@
 [
   {
+    "TYPE": "YSHEET",
+    "run": 0,
+    "jump": 1,
+    "idle": 2,
+    "hit": 3,
+    "die": 4,
+    "attack3": 5,
+    "attack2": 6,
+    "attack1": 7,
+    "air_attack2": 8,
+    "air_attack1": 9
+  },
+
+  {
     "TYPE": "MOTION_DELAY",
     "idle": 15,
     "run": 10,
     "jump": 4,
-    "attack1": 15,
+    "attack1": 10,
     "attack2": 10,
     "attack3": 10,
     "air_attack1": 5,
     "air_attack2": 10,
-    "hit": 10
+    "hit": 20,
+    "die": 20
   },
 
   {
@@ -17,12 +32,13 @@
     "idle": 4,
     "run": 6,
     "jump": 10,
-    "attack1": 3,
-    "attack2": 8,
+    "attack1": 5,
+    "attack2": 6,
     "attack3": 6,
-    "air_attack1": 4,
-    "air_attack2": 4,
-    "hit": 4
+    "air_attack1": 3,
+    "air_attack2": 3,
+    "hit": 3,
+    "die": 7
   },
 
   {
@@ -46,6 +62,6 @@
     "attack2": [ 0, 20, 30, -20 ],
     "attack3": [ -35, 3, 35, -19 ],
     "air_attack1": [ -5, 15, 15, -20 ],
-    "air_attack2": [ -27, -5, 27, 20 ]
+    "air_attack2": [ -27, -5, 27, -20 ]
   }
 ]

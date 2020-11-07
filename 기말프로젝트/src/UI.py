@@ -3,14 +3,19 @@ import Framework
 from pico2d import *
 import ctypes
 
-Relic = None
 Font = None
-stringData = [];
+stringData = []
+relic_image = None
 
 def load():
-    global Relic, Font
-    Relic = load_image('../res/Item/relic.png')
+    global Font, relic_image
     Font = load_font('../res/UI/모리스9.ttf', 12)
+    relic_image = load_image('../res/Item/relic.png')
+
+def eventHandler(event):
+    if event.type == SDL_MOUSEMOTION:
+        x, y = event.x, 600 - event.y
+        #if
 
 def addString(pos, string, color, time, dy):
     # string : 출력 문자열
@@ -20,8 +25,15 @@ def addString(pos, string, color, time, dy):
     stringData.append([pos, string, color, time, dy])
 
 def drawRelic():
-    for i in range(len(Ingame_state.chr.relic)):
-        Relic.clip_draw(Ingame_state.chr.relic[i] % 100 * 128, (Ingame_state.chr.relic[i] // 100 - 1) * 128, 128, 128, 20 + 32 * i, 600 - (Ingame_state.chr.relic[i] // 100) * 20, 64, 64)
+    chr = Ingame_state.chr
+    for i in range(len(chr.relic)):
+        relic_image.clip_draw(chr.relic[i].id % 100 * 128, (chr.relic[i].id // 100 - 1) * 128, 128, 128, 20 + 32 * i, 600 - (chr.relic[i].id // 100) * 20, 64, 64)
+        if chr.relic[i].stack != -1:
+            if chr.relic[i].isActive:
+                rgb = (50, 255, 50)
+            else:
+                rgb = (255, 255, 255)
+            Font.draw(26 + 32 * i, 600 - (chr.relic[i].id // 100) * 20 - 8, str(chr.relic[i].stack), rgb)
 
 def printStringData():
     for i in stringData:

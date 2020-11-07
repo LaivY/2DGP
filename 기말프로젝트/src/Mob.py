@@ -1,15 +1,14 @@
 import Ingame_state
+import Damage_Parser
 import UI
-import json
+#import json
 from pico2d import *
 from random import randint
 
 debug = False
 
 class Mob:
-    # 몬스터 이미지 저장
-    #slime_image = None
-    #needle_slime_image = None
+    # 몬스터 이미지
     MOB_IMAGE = {}
 
     def __init__(self, mobId, xPos, yPos):
@@ -87,31 +86,6 @@ class Mob:
         else:
             self.image.clip_composite_draw(self.frame // self.MOTION_DELAY[self.state] % self.MOTION_FRAME[self.state] * self.sxSize,
                                            self.sySize * ySheet, self.sxSize, self.sySize, 0, 'h', self.x, self.y, self.xSize, self.ySize)
-
-    def update_mob_hitbox(self):
-        if self.dir == 'LEFT':
-            self.hitBox = (self.x + self.MOTION_HITBOX[self.state][0], self.y + self.MOTION_HITBOX[self.state][1],
-                           self.x + self.MOTION_HITBOX[self.state][2], self.y + self.MOTION_HITBOX[self.state][3])
-        else:
-            self.hitBox = (self.x - self.MOTION_HITBOX[self.state][0], self.y + self.MOTION_HITBOX[self.state][1],
-                           self.x - self.MOTION_HITBOX[self.state][2], self.y + self.MOTION_HITBOX[self.state][3])
-
-    def update_mob_hit_check(self):
-        hit = Ingame_state.mob_hit_check(self.hitBox)
-        if hit[0] and self.hitBy != hit[1] and self.state != 'die':
-            if self.state != 'attack':
-                self.state = 'hit'
-                self.frame = 0
-            self.dx = 0
-            self.hitBy = hit[1]
-            self.hp -= max(hit[2] - self.df, 0)
-            UI.addString([self.x, self.y], str(max(hit[2] - self.df, 0)), (255, 255, 255), 0.6, 0.1)
-            if self.hp <= 0:
-                self.state = 'die'
-                self.order = 'none'
-                self.frame = 0
-            if debug:
-                print('몬스터 HP : %d' % self.hp)
 
     def update_mob_order(self, delta_time):
         # 순찰
@@ -212,6 +186,19 @@ class Mob:
         self.x += self.dx
         self.y += self.dy
 
+    def update_mob_hitbox(self):
+        if self.dir == 'LEFT':
+            self.hitBox = (self.x + self.MOTION_HITBOX[self.state][0], self.y + self.MOTION_HITBOX[self.state][1],
+                           self.x + self.MOTION_HITBOX[self.state][2], self.y + self.MOTION_HITBOX[self.state][3])
+        else:
+            self.hitBox = (self.x - self.MOTION_HITBOX[self.state][0], self.y + self.MOTION_HITBOX[self.state][1],
+                           self.x - self.MOTION_HITBOX[self.state][2], self.y + self.MOTION_HITBOX[self.state][3])
+
+    def update_mob_hit_check(self):
+        hit = Ingame_state.mob_hit_check(self.hitBox)
+        if hit[0] and self.hitBy != hit[1] and self.state != 'die':
+            Damage_Parser.chr_attack_mob(self, Ingame_state.chr, Ingame_state.chr.ad)
+
     def update_mob_attack_range(self):
         self.attack_range = (0, 0, 0, 0)
         attack_start, attack_end = 0, 0
@@ -255,23 +242,8 @@ class Mob:
         if _left < right < _right and _bot < top < _top: HIT = True
         if _left < right < _right and _bot < bot < _top: HIT = True
 
-        if HIT and Ingame_state.chr.state != 'hit' and Ingame_state.chr.invincible_time == 0:
-            if Ingame_state.chr.state == 'idle' or Ingame_state.chr.state == 'run':
-                Ingame_state.chr.state = 'hit'
-                Ingame_state.chr.frame = 0
-
-                if self.x < Ingame_state.chr.x:
-                    Ingame_state.chr.dx = 0.1
-                    Ingame_state.chr.dir = 'LEFT'
-                else:
-                    Ingame_state.chr.dx = -0.1
-                    Ingame_state.chr.dir = 'RIGHT'
-
-            Ingame_state.chr.hp -= max(self.ad - Ingame_state.chr.df, 0)
-            Ingame_state.chr.invincible_time = 1
-            UI.addString([Ingame_state.chr.x, Ingame_state.chr.y], str(max(self.ad - Ingame_state.chr.df, 0)), (255, 50, 50), 0.5, 0.1)
-            if debug:
-                print('캐릭터 HP : %d' % Ingame_state.chr.hp)
+        if HIT and Ingame_state.chr.state != 'die' and Ingame_state.chr.invincible_time <= 0:
+            Damage_Parser.mob_attack_chr(self, Ingame_state.chr)
 
     def update(self, delta_time):
         self.update_mob_order(delta_time)
