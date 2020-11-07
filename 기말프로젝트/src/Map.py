@@ -1,6 +1,6 @@
 from pico2d import *
 
-debug = True
+debug = False
 
 class Map:
     TileSet = None      # 타일셋 이미지

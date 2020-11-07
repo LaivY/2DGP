@@ -1,8 +1,9 @@
 import Ingame_state
+import UI
 from pico2d import *
 from random import randint
 
-debug = True
+debug = False
 
 # 슬라임
 SLIME_YSHEET = {
@@ -43,7 +44,7 @@ SLIME_ATTACK_RANGE = {
 
 # 까시
 NEEDLE_YSHEET = {
-    'attack': 3,
+    'attack':3,
     'die': 2,
     'hit': 2,
     'idle': 1,
@@ -55,7 +56,7 @@ NEEDLE_MOTION_DELAY = {
     'die': 10,
     'hit': 15,
     'idle': 15,
-    'move': 10
+    'move': 20
 }
 
 NEEDLE_MOTION_FRAME = {
@@ -149,7 +150,7 @@ class Mob:
             self.xSize, self.ySize = 32, 25
             self.sxSize, self.sySize = 32, 25
             self.maxHp, self.hp = 50, 50
-            self.AD, self.DF, self.Speed = 25, 0, 0
+            self.AD, self.DF, self.Speed = 1, 0, 0
 
         elif self.id == 101:
             self.image = Mob.needle_slime_image
@@ -188,14 +189,14 @@ class Mob:
                 self.frame = 0
             self.dx = 0
             self.hitBy = hit[1]
-            self.hp -= hit[2]
-
-        if self.state != 'die' and self.hp <= 0:
-            self.state = 'die'
-            self.order = 'none'
-            self.frame = 0
-        #if debug:
-        #    print('몬스터 HP : %d' % self.hp)
+            self.hp -= max(hit[2] - self.DF, 0)
+            UI.addString([self.x, self.y], str(max(hit[2] - self.DF, 0)), (255, 255, 255), 0.5, 0.1)
+            if self.hp <= 0:
+                self.state = 'die'
+                self.order = 'none'
+                self.frame = 0
+            if debug:
+                print('몬스터 HP : %d' % self.hp)
 
     def update_mob_order(self, delta_time):
         # 순찰
@@ -351,14 +352,8 @@ class Mob:
                     Ingame_state.chr.dx = -0.1
                     Ingame_state.chr.dir = 'RIGHT'
 
-            Ingame_state.chr.invincible_time = 1
             Ingame_state.chr.hp -= self.AD
-
-            if 103 in Ingame_state.chr.relic:
-                self.hp -= 999
-                if debug:
-                    print('유물로인한 반사피해')
-
+            Ingame_state.chr.invincible_time = 1
             if debug:
                 print('캐릭터 HP : %d' % Ingame_state.chr.hp)
 
