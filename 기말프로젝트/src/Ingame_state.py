@@ -30,13 +30,12 @@ def draw():
     UI.draw()
 
 def enter():
-    chr.image = load_image('../res/adventurer-v1.5-Sheet.png')
-    if map.id < 0: map.id = 100
-    map.load_map()
-    load_mob()
+    chr.load()
+    map.load()
     UI.load()
+    loadMob()
 
-def load_mob():
+def loadMob():
     file = open('../res/Map/' + str(map.id) + '.txt', 'r')
     mobInfo = file.readlines()
     file.close()
@@ -116,7 +115,7 @@ def chr_portal_check():
                 map.id = portal[4]
                 map.tileRect.clear()
                 map.portalRect.clear()
-                map.load_map()
+                map.load()
                 chr.subState = 'jump2'
                 chr.x, chr.y = portal[5], portal[6]
             return
@@ -140,7 +139,7 @@ def mob_hit_check(hitBox):
     if left < hitBox[0] < right and bottom < hitBox[3] < top: HIT = True
     if left < hitBox[2] < right and bottom < hitBox[3] < top: HIT = True
     if HIT:
-        return [True, chr.state, chr.AD]
+        return [True, chr.state, chr.ad]
     return [False]
 
 def mob_landing_check(hitBox, x, dy):

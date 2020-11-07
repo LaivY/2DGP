@@ -1,118 +1,16 @@
 import Ingame_state
 import UI
+import json
 from pico2d import *
 from random import randint
 
 debug = False
 
-# 슬라임
-SLIME_YSHEET = {
-    'attack':4,
-    'die': 3,
-    'hit': 2,
-    'idle': 1,
-    'move': 0
-}
-
-SLIME_MOTION_DELAY = {
-    'attack': 20,
-    'die': 20,
-    'hit': 15,
-    'idle': 15,
-    'move': 20
-}
-
-SLIME_MOTION_FRAME = {
-    'attack': 5,
-    'die': 4,
-    'hit': 4,
-    'idle': 4,
-    'move': 4
-}
-
-SLIME_MOTION_HITBOX = {
-    'attack': (-14, 2, 14, -12),
-    'die': (-16, 2, 16, -12),
-    'hit': (-14, 2, 14, -12),
-    'idle': (-16, 2, 16, -12),
-    'move': (-14, 2, 14, -12)
-}
-
-SLIME_ATTACK_RANGE = {
-    'attack': (0, 0, 30, -10)
-}
-
-# 까시
-NEEDLE_YSHEET = {
-    'attack':3,
-    'die': 2,
-    'hit': 2,
-    'idle': 1,
-    'move': 0
-}
-
-NEEDLE_MOTION_DELAY = {
-    'attack': 15,
-    'die': 10,
-    'hit': 15,
-    'idle': 15,
-    'move': 20
-}
-
-NEEDLE_MOTION_FRAME = {
-    'attack': 8,
-    'die': 9,
-    'hit': 4,
-    'idle': 6,
-    'move': 13
-}
-
-NEEDLE_MOTION_HITBOX = {
-    'attack': (-8, -4, 8, -16),
-    'die': (-8, -4, 8, -16),
-    'hit': (-8, -4, 8, -16),
-    'idle': (-8, -4, 8, -16),
-    'move': (-8, -4, 8, -16)
-}
-
-NEEDLE_ATTACK_RANGE = {
-    'attack': (25, 16, -25, -16)
-}
-
-# 모션별 이미지 y좌표
-MOTION_YSHEET = {
-    '100': SLIME_YSHEET,
-    '101': NEEDLE_YSHEET
-}
-
-# 모션별 딜레이
-MOTION_DELAY = {
-    '100': SLIME_MOTION_DELAY,
-    '101': NEEDLE_MOTION_DELAY
-}
-
-# 모션별 프레임 수
-MOTION_FRAME = {
-    '100': SLIME_MOTION_FRAME,
-    '101': NEEDLE_MOTION_FRAME
-}
-
-# 모션별 히트박스
-MOTION_HITBOX = {
-    '100': SLIME_MOTION_HITBOX,
-    '101': NEEDLE_MOTION_HITBOX
-}
-
-# 모션별 공격범위
-MOTION_HIT_RANGE = {
-    '100': SLIME_ATTACK_RANGE,
-    '101': NEEDLE_ATTACK_RANGE
-}
-
 class Mob:
-    # 슬라임 이미지 로드 (32x25)
-    slime_image = None
-    needle_slime_image = None
+    # 몬스터 이미지 저장
+    #slime_image = None
+    #needle_slime_image = None
+    MOB_IMAGE = {}
 
     def __init__(self, mobId, xPos, yPos):
         ### 몬스터 이미지 관련 변수들 ###
@@ -137,49 +35,66 @@ class Mob:
 
         ### 몬스터 스탯 관련 변수들 ###
         self.maxHp, self.hp = 50, 50                            # 최대HP, 현재HP
-        self.AD, self.DF, self.Speed, = 1, 0, 0                 # 공격력, 방어력, x축 추가 이동속도
+        self.ad, self.df, self.speed, = 0, 0, 0                 # 공격력, 방어력, x축 추가 이동속도
+
+        ### 몬스터 모션별 범위 변수들 :: JSON ###
+        self.MOTION_YSHEET = {}
+        self.MOTION_DELAY = {}
+        self.MOTION_FRAME = {}
+        self.MOTION_HITBOX = {}
+        self.MOTION_ATTACK_RANGE = {}
 
     def load(self):
-        # MobSet load
-        if Mob.slime_image is None:
-            Mob.slime_image = load_image('../res/Mob/100/sheet.png')
-            Mob.needle_slime_image = load_image('../res/Mob/101/sheet.png')
+        # Mob image load
+        try:
+            if Mob.MOB_IMAGE[self.id] is not None: pass
+        except:
+            Mob.MOB_IMAGE[self.id] = load_image('../res/Mob/' + str(self.id) + '/sheet.png')
 
-        if self.id == 100:
-            self.image = Mob.slime_image
-            self.xSize, self.ySize = 32, 25
-            self.sxSize, self.sySize = 32, 25
-            self.maxHp, self.hp = 50, 50
-            self.AD, self.DF, self.Speed = 1, 0, 0
+        # Mob data load
+        self.image = Mob.MOB_IMAGE[self.id]
+        self.loadMotionData()
 
-        elif self.id == 101:
-            self.image = Mob.needle_slime_image
-            self.xSize, self.ySize = 64, 64
-            self.sxSize, self.sySize = 64, 64
-            self.maxHp, self.hp = 50, 50
-            self.AD, self.DF, self.Speed = 1, 0, 0
+    def loadMotionData(self):
+        with open('../res/Mob/' + str(self.id) + '/info.json', 'r') as f:
+            data = json.load(f)
+        for i in data:
+            if i['TYPE'] == 'INFO':
+                self.xSize, self.ySize = i['xSize'], i['ySize']
+                self.sxSize, self.sySize = i['sxSize'], i['sySize']
+                self.hp, self.ad, self.df, self.speed = i['hp'], i['ad'], i['df'], i['speed']
+            if i['TYPE'] == 'YSHEET':
+                self.MOTION_YSHEET = dict(i)
+            elif i['TYPE'] == 'MOTION_DELAY':
+                self.MOTION_DELAY = dict(i)
+            elif i['TYPE'] == 'MOTION_FRAME':
+                self.MOTION_FRAME = dict(i)
+            elif i['TYPE'] == 'MOTION_HITBOX':
+                self.MOTION_HITBOX = dict(i)
+            elif i['TYPE'] == 'MOTION_ATTACK_RANGE':
+                self.MOTION_ATTACK_RANGE = dict(i)
 
     def draw(self):
         if debug:
             draw_rectangle(self.hitBox[0], self.hitBox[1], self.hitBox[2], self.hitBox[3])
             draw_rectangle(self.attack_range[0], self.attack_range[1], self.attack_range[2], self.attack_range[3])
         if self.state == 'none': return
-        ySheet = MOTION_YSHEET[str(self.id)][self.state]
+        ySheet = self.MOTION_YSHEET[self.state]
 
         if self.dir == 'LEFT':
-            self.image.clip_draw(self.frame // MOTION_DELAY[str(self.id)][self.state] % MOTION_FRAME[str(self.id)][self.state] * self.sxSize,
+            self.image.clip_draw(self.frame // self.MOTION_DELAY[self.state] % self.MOTION_FRAME[self.state] * self.sxSize,
                                  self.sySize * ySheet, self.sxSize, self.sySize, self.x, self.y, self.xSize, self.ySize)
         else:
-            self.image.clip_composite_draw(self.frame // MOTION_DELAY[str(self.id)][self.state] % MOTION_FRAME[str(self.id)][self.state] * self.sxSize,
+            self.image.clip_composite_draw(self.frame // self.MOTION_DELAY[self.state] % self.MOTION_FRAME[self.state] * self.sxSize,
                                            self.sySize * ySheet, self.sxSize, self.sySize, 0, 'h', self.x, self.y, self.xSize, self.ySize)
 
     def update_mob_hitbox(self):
         if self.dir == 'LEFT':
-            self.hitBox = (self.x + MOTION_HITBOX[str(self.id)][self.state][0], self.y + MOTION_HITBOX[str(self.id)][self.state][1],
-                           self.x + MOTION_HITBOX[str(self.id)][self.state][2], self.y + MOTION_HITBOX[str(self.id)][self.state][3])
+            self.hitBox = (self.x + self.MOTION_HITBOX[self.state][0], self.y + self.MOTION_HITBOX[self.state][1],
+                           self.x + self.MOTION_HITBOX[self.state][2], self.y + self.MOTION_HITBOX[self.state][3])
         else:
-            self.hitBox = (self.x - MOTION_HITBOX[str(self.id)][self.state][0], self.y + MOTION_HITBOX[str(self.id)][self.state][1],
-                           self.x - MOTION_HITBOX[str(self.id)][self.state][2], self.y + MOTION_HITBOX[str(self.id)][self.state][3])
+            self.hitBox = (self.x - self.MOTION_HITBOX[self.state][0], self.y + self.MOTION_HITBOX[self.state][1],
+                           self.x - self.MOTION_HITBOX[self.state][2], self.y + self.MOTION_HITBOX[self.state][3])
 
     def update_mob_hit_check(self):
         hit = Ingame_state.mob_hit_check(self.hitBox)
@@ -189,8 +104,8 @@ class Mob:
                 self.frame = 0
             self.dx = 0
             self.hitBy = hit[1]
-            self.hp -= max(hit[2] - self.DF, 0)
-            UI.addString([self.x, self.y], str(max(hit[2] - self.DF, 0)), (255, 255, 255), 0.5, 0.1)
+            self.hp -= max(hit[2] - self.df, 0)
+            UI.addString([self.x, self.y], str(max(hit[2] - self.df, 0)), (255, 255, 255), 0.6, 0.1)
             if self.hp <= 0:
                 self.state = 'die'
                 self.order = 'none'
@@ -264,7 +179,7 @@ class Mob:
 
     def update_mob_pos(self):
         self.frame += 1
-        if self.frame >= MOTION_FRAME[str(self.id)][self.state] * (MOTION_DELAY[str(self.id)][self.state]):
+        if self.frame >= self.MOTION_FRAME[self.state] * (self.MOTION_DELAY[self.state]):
             self.frame = 0
             if self.state == 'attack' or self.state == 'hit':
                 self.frame = 0
@@ -286,7 +201,7 @@ class Mob:
         # Landing Check
         Landing_Result = Ingame_state.mob_landing_check(self.hitBox, self.x, self.dy)
         if Landing_Result[0]:
-            self.y = Landing_Result[1] - MOTION_HITBOX[str(self.id)][self.state][1]
+            self.y = Landing_Result[1] - self.MOTION_HITBOX[self.state][1]
             self.dy = 0
         else:
             self.state = 'idle'
@@ -308,13 +223,13 @@ class Mob:
             attack_end = 6
 
         if self.state == 'attack':
-            if MOTION_DELAY[str(self.id)][self.state] * attack_start < self.frame < MOTION_DELAY[str(self.id)][self.state] * attack_end:
+            if self.MOTION_DELAY[self.state] * attack_start < self.frame < self.MOTION_DELAY[self.state] * attack_end:
                 if self.dir == 'RIGHT':
-                    self.attack_range = (self.x + MOTION_HIT_RANGE[str(self.id)][self.state][0], self.y + MOTION_HIT_RANGE[str(self.id)][self.state][1],
-                                         self.x + MOTION_HIT_RANGE[str(self.id)][self.state][2], self.y + MOTION_HIT_RANGE[str(self.id)][self.state][3])
+                    self.attack_range = (self.x + self.MOTION_ATTACK_RANGE[self.state][0], self.y + self.MOTION_ATTACK_RANGE[self.state][1],
+                                         self.x + self.MOTION_ATTACK_RANGE[self.state][2], self.y + self.MOTION_ATTACK_RANGE[self.state][3])
                 else:
-                    self.attack_range = (self.x - MOTION_HIT_RANGE[str(self.id)][self.state][0], self.y + MOTION_HIT_RANGE[str(self.id)][self.state][1],
-                                         self.x - MOTION_HIT_RANGE[str(self.id)][self.state][2], self.y + MOTION_HIT_RANGE[str(self.id)][self.state][3])
+                    self.attack_range = (self.x - self.MOTION_ATTACK_RANGE[self.state][0], self.y + self.MOTION_ATTACK_RANGE[self.state][1],
+                                         self.x - self.MOTION_ATTACK_RANGE[self.state][2], self.y + self.MOTION_ATTACK_RANGE[self.state][3])
 
     def update_mob_attack_chr_check(self):
         HIT = False
@@ -352,8 +267,9 @@ class Mob:
                     Ingame_state.chr.dx = -0.1
                     Ingame_state.chr.dir = 'RIGHT'
 
-            Ingame_state.chr.hp -= self.AD
+            Ingame_state.chr.hp -= max(self.ad - Ingame_state.chr.df, 0)
             Ingame_state.chr.invincible_time = 1
+            UI.addString([Ingame_state.chr.x, Ingame_state.chr.y], str(max(self.ad - Ingame_state.chr.df, 0)), (255, 50, 50), 0.5, 0.1)
             if debug:
                 print('캐릭터 HP : %d' % Ingame_state.chr.hp)
 

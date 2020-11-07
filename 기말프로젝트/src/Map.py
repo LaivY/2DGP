@@ -13,10 +13,13 @@ class Map:
         self.portalRect = []    # 포탈 판정범위
         self.objectRect = []    # 상호작용 오브젝트 판정범위
 
-    def load_map(self):
+    def load(self):
         # TileSet load
         if Map.TileSet is None:
-            Map.TileSet = load_image('../res/Space_Cave_Tileset.png')
+            Map.TileSet = load_image('../res/Map/tileSet.png')
+
+        # Start map
+        if self.id == -1: self.id = 100
 
         # Map file load
         file = open('../res/Map/' + str(self.id) + '.txt', 'r')

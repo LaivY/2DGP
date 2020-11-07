@@ -9,7 +9,7 @@ stringData = [];
 
 def load():
     global Relic, Font
-    Relic = load_image('../res/Relic_Set.png')
+    Relic = load_image('../res/Item/relic.png')
     Font = load_font('../res/UI/모리스9.ttf', 12)
 
 def addString(pos, string, color, time, dy):
@@ -29,7 +29,6 @@ def printStringData():
         Font.draw(i[0][0] - cx, i[0][1] + cy + 5, i[1], i[2])
         i[3] -= Framework.delta_time
         i[0][1] += i[4]
-
         if i[3] <= 0:
             stringData.remove(i)
 

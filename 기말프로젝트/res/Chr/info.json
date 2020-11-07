@@ -1,0 +1,51 @@
+[
+  {
+    "TYPE": "MOTION_DELAY",
+    "idle": 15,
+    "run": 10,
+    "jump": 4,
+    "attack1": 15,
+    "attack2": 10,
+    "attack3": 10,
+    "air_attack1": 5,
+    "air_attack2": 10,
+    "hit": 10
+  },
+
+  {
+    "TYPE": "MOTION_FRAME",
+    "idle": 4,
+    "run": 6,
+    "jump": 10,
+    "attack1": 3,
+    "attack2": 8,
+    "attack3": 6,
+    "air_attack1": 4,
+    "air_attack2": 4,
+    "hit": 4
+  },
+
+  {
+    "TYPE": "MOTION_HITBOX",
+    "idle": [ 6, 11.5, -6, -18.5 ],
+    "run": [ 0, 11.5, -11, -18.5 ],
+    "jump": [ 6, 5, -6, -9 ],
+    "jump2": [ 6, 5, -6, -9 ],
+    "jump3": [ 6, 5, -6, -9 ],
+    "attack1": [ 5, 3.5, -5, -18.5 ],
+    "attack2": [ 5, 1.5, -5, -18.5 ],
+    "attack3": [ 5, 1.5, -5, -18.5 ],
+    "air_attack1": [ 8, 3.5, -2, -18.5 ],
+    "air_attack2": [ 8, 3.5, -2, -18.5 ],
+    "hit": [ 10, 11.5, 0, -18.5 ]
+  },
+
+  {
+    "TYPE": "MOTION_ATTACK_RANGE",
+    "attack1": [ 0, 20, 30, -20 ],
+    "attack2": [ 0, 20, 30, -20 ],
+    "attack3": [ -35, 3, 35, -19 ],
+    "air_attack1": [ -5, 15, 15, -20 ],
+    "air_attack2": [ -27, -5, 27, 20 ]
+  }
+]

@@ -1,0 +1,54 @@
+[
+	{
+		"TYPE": "INFO",
+		"xSize": 64,
+		"ySize": 64,
+		"sxSize": 64,
+		"sySize": 64,
+		"hp": 35,
+		"ad": 5,
+		"df": 0,
+		"speed": 0
+	},
+
+	{
+		"TYPE": "YSHEET",
+		"attack": 3,
+		"die": 2,
+		"hit": 2,
+		"idle": 1,
+		"move": 0
+	},
+
+	{
+		"TYPE": "MOTION_DELAY",
+		"attack": 15,
+		"die": 10,
+		"hit": 15,
+		"idle": 15,
+		"move": 20
+	},
+
+	{
+		"TYPE": "MOTION_FRAME",
+		"attack": 8,
+		"die": 9,
+		"hit": 4,
+		"idle": 6,
+		"move": 13
+	},
+
+	{
+		"TYPE": "MOTION_HITBOX",
+		"attack": [ -8, -4, 8, -16 ],
+		"die": [ -8, -4, 8, -16 ],
+		"hit": [ -8, -4, 8, -16 ],
+		"idle": [ -8, -4, 8, -16 ],
+		"move": [ -8, -4, 8, -16 ]
+	},
+
+	{
+		"TYPE": "MOTION_ATTACK_RANGE",
+		"attack": [ 25, 16, -25, -16 ]
+	}
+]
