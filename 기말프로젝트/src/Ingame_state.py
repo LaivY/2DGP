@@ -17,6 +17,7 @@ def eventHandler(e):
     chr.eventHandler(e)
 
     # UI 이벤트처리
+    UI.eventHandler(e)
 
 def update():
     chr.update(Framework.delta_time)
@@ -124,6 +125,10 @@ def chr_portal_check():
                 map.tileRect.clear()
                 map.portalRect.clear()
                 map.load()
+
+                mob.clear()
+                loadMob()
+
                 chr.subState = 'jump2'
                 chr.x, chr.y = portal[5], portal[6]
             return

@@ -1,11 +1,9 @@
 import Ingame_state
 import UI
+import json
 from random import randint
 
-relic_name = {
-    100 : '불타는 혈액',
-    101 : ''
-}
+relic_data = {}
 
 class relic:
     image = None
@@ -21,7 +19,6 @@ class relic:
 def addRandomRelic():
     chr = Ingame_state.chr
     inven = chr.relic
-    #rList = chr.relicIdList
 
     # 모든 유물을 갖고있을 경우
     if len(inven) >= 10:
@@ -49,8 +46,13 @@ def addRandomRelic():
             elif _id == 109:
                 r.stack = 0
                 r.condition = 6
+
+            # 유물 데이터 설정
+            r.name = relic_data[str(_id)]['NAME']
+            r.desc = relic_data[str(_id)]['DESC']
+            r.flavorText = relic_data[str(_id)]['FLAVOR_TEXT']
+            
             inven.append(r)
-            #rList.append(_id)
             UI.addString([chr.x, chr.y], '유물을 획득했습니다!', (255, 255, 255), 1, 0.1)
             break
 
@@ -84,3 +86,11 @@ def updataRelicStack():
             r.isActive = True
         else:
             r.isActive = False
+
+def loadRelicData():
+    global relic_data
+    with open('../res/Item/relic_info.json', 'r') as f:
+        data = json.load(f)
+    for i in data:
+        id = i['ID']
+        relic_data[str(id)] = dict(i)

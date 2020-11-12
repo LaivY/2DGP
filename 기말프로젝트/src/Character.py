@@ -110,10 +110,12 @@ class Character:
             self.y, self.dy = self.y + 5, 5
 
         # 삼단점프 :: 윙 부츠
-        elif (e.key, e.type) == (SDLK_c, SDL_KEYDOWN) and self.subState == 'jump2' and 107 in self.relicIdList:
-            self.subState = 'jump3'
-            self.frame, self.timer = 0, 0
-            self.y, self.dy = self.y + 5, 5
+        elif (e.key, e.type) == (SDLK_c, SDL_KEYDOWN) and self.subState == 'jump2':
+            for r in self.relic:
+                if r.id == 107:
+                    self.subState = 'jump3'
+                    self.frame, self.timer = 0, 0
+                    self.y, self.dy = self.y + 5, 5
 
         # 왼쪽 달리기
         elif (e.key, e.type) == (SDLK_LEFT, SDL_KEYDOWN):
