@@ -37,7 +37,9 @@ def drawRelic():
 
 def printStringData():
     for i in stringData:
-        cx, cy = GetTextDimensions(i[1], 16, '모리스9')
+        cx, cy = GetTextDimensions(i[1], 7, '모리스9')
+        #draw_rectangle(i[0][0] - cx, i[0][1] + cy + 10, i[0][0] + cx, i[0][1] + cy)
+
         Font.draw(i[0][0] - cx, i[0][1] + cy + 5, i[1], i[2])
         i[3] -= Framework.delta_time
         i[0][1] += i[4]
@@ -58,7 +60,7 @@ def GetTextDimensions(text, points, font):
     hfont_old = ctypes.windll.gdi32.SelectObject(hdc, hfont)
 
     size = SIZE(0, 0)
-    ctypes.windll.gdi32.GetTextExtentPoint32A(hdc, text, len(text), ctypes.byref(size))
+    ctypes.windll.gdi32.GetTextExtentPoint32W(hdc, text, len(text), ctypes.byref(size))
 
     ctypes.windll.gdi32.SelectObject(hdc, hfont_old)
     ctypes.windll.gdi32.DeleteObject(hfont)

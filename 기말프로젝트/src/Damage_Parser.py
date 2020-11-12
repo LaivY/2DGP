@@ -4,7 +4,7 @@ import Relic
 def chr_attack_mob(mob, chr, dmg):
     _dmg = dmg
 
-    # 유물 :: 펜촉
+    # 유물 :: 펜 촉
     for r in chr.relic:
         if r.id == 105:
             if r.isActive:
@@ -28,8 +28,10 @@ def chr_attack_mob(mob, chr, dmg):
         mob.frame = 0
 
         # 유물 :: 피가 담긴 병
-        if 104 in chr.relicIdList:
-            chr_hp_recovery(chr, 2)
+        for r in chr.relic:
+            if r.id == 104:
+                chr_hp_recovery(chr, 2)
+
     Relic.updataRelicStack()
 
 def mob_attack_chr(mob, chr):

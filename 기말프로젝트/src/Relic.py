@@ -1,30 +1,43 @@
 import Ingame_state
+import UI
 from random import randint
+
+relic_name = {
+    100 : '불타는 혈액',
+    101 : ''
+}
 
 class relic:
     image = None
     def __init__(self, _id):
         self.id = _id
+        self.name = "name"
+        self.desc = "desc"
+        self.flavorText = "flavorText"
         self.stack = -1
         self.condition = -1
         self.isActive = False
 
 def addRandomRelic():
-    inven = Ingame_state.chr.relic
-    rList = Ingame_state.chr.relicIdList
+    chr = Ingame_state.chr
+    inven = chr.relic
+    #rList = chr.relicIdList
+
     # 모든 유물을 갖고있을 경우
     if len(inven) >= 10:
+        UI.addString([chr.x, chr.y], '더 이상 획득할 유물이 없습니다.', (255, 255, 255), 1, 0.1)
         return
 
     # 중복없이 랜덤으로 한 개 획득
     while True:
         Pass = True
         _id = randint(100, 109)
-        for i in rList:
-            if i == _id:
+        for i in inven:
+            if i.id == _id:
                 Pass = False
                 break
         if Pass:
+            # 유물 초기 세팅
             r = relic(_id)
             if _id == 105:
                 r.stack = 0
@@ -37,7 +50,8 @@ def addRandomRelic():
                 r.stack = 0
                 r.condition = 6
             inven.append(r)
-            rList.append(_id)
+            #rList.append(_id)
+            UI.addString([chr.x, chr.y], '유물을 획득했습니다!', (255, 255, 255), 1, 0.1)
             break
 
     updateChrStat()
@@ -50,12 +64,12 @@ def updateChrStat():
     chr.ad, chr.AS, chr.df, chr.speed, = 5, 0, 0, 0
 
     # 유물로 인한 스탯 상승
-    for r in chr.relicIdList:
-        if r == 100: # 불타는 혈액
+    for r in chr.relic:
+        if r.id == 100: # 불타는 혈액
             chr.localMaxHP += 10
-        elif r == 101: # 금강저
+        elif r.id == 101: # 금강저
             chr.ad += 1
-        elif r == 102: # 매끄러운 돌
+        elif r.id == 102: # 매끄러운 돌
             chr.df += 1
 
     # 공격속도 적용

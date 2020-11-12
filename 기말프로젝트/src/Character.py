@@ -45,7 +45,7 @@ class Character:
         self.maxHp, self.localMaxHP, self.hp = 50, 50, 50                       # 원래 최대HP, 최종 최대HP, 현재HP
         self.ad, self.AS, self.df, self.speed, = 5, 0, 0, 0                     # 공격력, 공격속도, 방어력, x축 추가 이동속도
         self.relic = []                                                         # 유물
-        self.relicIdList = []                                                   # 유물 코드
+        #self.relicIdList = []                                                   # 유물 코드
 
         ### 캐릭터 모션별 범위 변수들 :: JSON ###
         self.MOTION_YSHEET = {}
