@@ -1,5 +1,6 @@
 import Ingame_state
 import Relic
+import UI
 from pico2d import *
 
 debug = False
@@ -7,19 +8,24 @@ debug = False
 # 달리기 입력 무시
 RUN_EXCEPTION = (
     'attack1', 'attack2', 'attack3',
-    'air_attack1', 'air_attack2', 'hit'
+    'air_attack1', 'air_attack2', 'hit', 'slide'
 )
 
 # 점프 입력 무시
 JUMP_EXCEPTION = (
     'attack1', 'attack2', 'attack3',
-    'air_attack1', 'air_attack2', 'hit'
+    'air_attack1', 'air_attack2', 'hit', 'slide'
 )
 
 # 공격 입력 무시
 ATTACK1_EXCEPTION = (
     'attack1', 'attack2', 'attack3',
-    'air_attack1', 'air_attack2', 'hit'
+    'air_attack1', 'air_attack2', 'hit', 'slide'
+)
+
+# 슬라이딩 입력 무시
+SLIDE_EXCEPTION = (
+    'air_attack1', 'air_attack2', 'slide'
 )
 
 class Character:
@@ -35,6 +41,7 @@ class Character:
         self.frame, self.timer = 0, 0                                           # 프레임, 타이머
         self.state, self.subState = 'idle', 'jump'                              # 상태, 서브상태
         self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 400, 150, 0, 0   # 좌우, 좌표와 움직임속도
+        self.relicGainPos = []                                                  # 유물 획득 위치 정보
 
         ### 캐릭터 피격, 공격 관련 변수들 ###
         self.hitBox = (0, 0, 0, 0)                                              # 히트박스
@@ -45,7 +52,6 @@ class Character:
         self.maxHp, self.localMaxHP, self.hp = 50, 50, 50                       # 원래 최대HP, 최종 최대HP, 현재HP
         self.ad, self.AS, self.df, self.speed, = 5, 0, 0, 0                     # 공격력, 공격속도, 방어력, x축 추가 이동속도
         self.relic = []                                                         # 유물
-        #self.relicIdList = []                                                   # 유물 코드
 
         ### 캐릭터 모션별 범위 변수들 :: JSON ###
         self.MOTION_YSHEET = {}
@@ -99,9 +105,11 @@ class Character:
 
         # 점프
         if (e.key, e.type) == (SDLK_c, SDL_KEYDOWN) and self.state not in JUMP_EXCEPTION and self.subState == 'none':
+            self.state = 'idle'
             self.subState = 'jump'
             self.frame, self.timer = 0, 0
             self.y, self.dy = self.y + 10, 6
+            self.dx = 0
 
         # 더블점프
         elif (e.key, e.type) == (SDLK_c, SDL_KEYDOWN) and self.subState == 'jump':
@@ -116,6 +124,7 @@ class Character:
                     self.subState = 'jump3'
                     self.frame, self.timer = 0, 0
                     self.y, self.dy = self.y + 5, 5
+                    break
 
         # 왼쪽 달리기
         elif (e.key, e.type) == (SDLK_LEFT, SDL_KEYDOWN):
@@ -145,10 +154,23 @@ class Character:
                 self.state = 'idle'
                 self.dx = 0
 
+        # 슬라이딩
+        elif (e.key, e.type) == (SDLK_SPACE, SDL_KEYDOWN) and self.state not in SLIDE_EXCEPTION and 'jump' not in self.subState:
+            if self.leftKeyDown:
+                self.state = 'slide'
+                self.frame, self.timer = 0, 0
+                self.dir = 'LEFT'
+                self.dx = -5
+            elif self.rightKeyDown:
+                self.state = 'slide'
+                self.frame, self.timer = 0, 0
+                self.dir = 'RIGHT'
+                self.dx = 5
+
         # 상호작용
         elif (e.key, e.type) == (SDLK_z, SDL_KEYDOWN) and (self.state == 'idle'):
             interaction_result = Ingame_state.chr_interaction_check()
-            if interaction_result != (-1, -1):
+            if interaction_result != -1:
                 self.interaction_handler(interaction_result)
 
         # 기본공격 1타
@@ -178,9 +200,13 @@ class Character:
             self.attackKeyDown = False
 
     def interaction_handler(self, type):
-        if type == (0, 1): # 유물 상자
-            Relic.addRandomRelic()
-            Relic.updateChrStat()
+        if (type[0], type[1]) == (0, 1): # 유물 상자
+            if (Ingame_state.map.id, type[2], type[3]) in self.relicGainPos:
+                UI.addString([self.x, self.y], '상자가 비어있습니다.', (255, 255, 255), 1, 0.1)
+            else:
+                self.relicGainPos.append( (Ingame_state.map.id, type[2], type[3]) )
+                Relic.addRandomRelic()
+                Relic.updateChrStat()
 
     def update_chr_pos(self, delta_time):
         self.frame += 1
@@ -230,6 +256,26 @@ class Character:
                 self.frame, self.dy = 0, 0
                 self.y = Landing_Result[1]
 
+        # 슬라이드
+        elif self.state == 'slide':
+            # update Cycle
+            self.timer += delta_time
+            if self.timer > delta_time * 6:
+                if self.dir == 'LEFT' and self.dx < 0:
+                    self.dx += 1
+                elif self.dir == 'RIGHT' and self.dx > 0:
+                    self.dx -= 1
+                self.timer = 0
+            if self.frame >= self.MOTION_FRAME[self.state] * self.MOTION_DELAY[self.state]:
+                self.state = 'idle'
+                self.frame, self.timer, self.dx = 0, 0, 0
+
+            # Landing Check
+            Landing_Result = Ingame_state.chr_landing_check()
+            if not Landing_Result[0]:
+                self.state = 'idle'
+                self.subState = 'jump'
+
         # 사망
         elif self.state == 'die':
             if self.frame >= self.MOTION_FRAME['die'] * self.MOTION_DELAY['die']:
@@ -278,7 +324,11 @@ class Character:
         # Collide Check
         Collide_Result = Ingame_state.chr_collide_check()
         if Collide_Result[0]:
-            if Collide_Result[1] != 0: self.x = Collide_Result[1]
+            if Collide_Result[1] != 0:
+                if self.dx > 0:
+                    self.x = Collide_Result[1] + self.MOTION_HITBOX[self.state][0]
+                else:
+                    self.x = Collide_Result[1] - self.MOTION_HITBOX[self.state][0]
             if Collide_Result[2] != 0: self.y = Collide_Result[2]
             self.dx, self.dy = Collide_Result[3], Collide_Result[4]
 
@@ -290,14 +340,14 @@ class Character:
         if self.state == 'die': return
 
         if self.dir == 'RIGHT':
-            if self.subState == 'jump' or self.subState == 'jump2':
+            if 'jump' in self.subState:
                 self.hitBox = (self.x - self.MOTION_HITBOX[self.subState][0], self.y + self.MOTION_HITBOX[self.subState][1],
                                self.x - self.MOTION_HITBOX[self.subState][2], self.y + self.MOTION_HITBOX[self.subState][3])
             else:
                 self.hitBox = (self.x - self.MOTION_HITBOX[self.state][0], self.y + self.MOTION_HITBOX[self.state][1],
                                self.x - self.MOTION_HITBOX[self.state][2], self.y + self.MOTION_HITBOX[self.state][3])
         else:
-            if self.subState == 'jump' or self.subState == 'jump2':
+            if 'jump' in self.subState:
                 self.hitBox = (self.x - self.MOTION_HITBOX[self.subState][0], self.y + self.MOTION_HITBOX[self.subState][1],
                                self.x - self.MOTION_HITBOX[self.subState][2], self.y + self.MOTION_HITBOX[self.subState][3])
             else:

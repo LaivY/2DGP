@@ -13,6 +13,7 @@ chr = Character()
 def eventHandler(e):
     if e.type == SDL_QUIT or (e.type, e.key) == (SDL_KEYDOWN, SDLK_ESCAPE):
         Framework.running = False
+
     # 캐릭터 이벤트처리
     chr.eventHandler(e)
 
@@ -131,13 +132,14 @@ def chr_portal_check():
 
                 chr.subState = 'jump2'
                 chr.x, chr.y = portal[5], portal[6]
+                chr.dx, chr.dy = 0, 0
             return
 
 def chr_interaction_check():
     for obj in map.objectRect:
         if obj[0] <= chr.x <= obj[2] and obj[3] <= chr.y - 10 <= obj[1]:
-            return obj[4], obj[5]
-    return -1, -1
+            return obj[4], obj[5], (obj[0] + obj[2]) / 2, (obj[1] + obj[3]) / 2
+    return -1
 
 def mob_hit_check(hitBox):
     HIT = False

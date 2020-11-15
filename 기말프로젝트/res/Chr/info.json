@@ -1,16 +1,17 @@
 [
   {
     "TYPE": "YSHEET",
-    "run": 0,
-    "jump": 1,
-    "idle": 2,
-    "hit": 3,
-    "die": 4,
-    "attack3": 5,
-    "attack2": 6,
-    "attack1": 7,
-    "air_attack2": 8,
-    "air_attack1": 9
+    "slide": 0,
+    "run": 1,
+    "jump": 2,
+    "idle": 3,
+    "hit": 4,
+    "die": 5,
+    "attack3": 6,
+    "attack2": 7,
+    "attack1": 8,
+    "air_attack2": 9,
+    "air_attack1": 10
   },
 
   {
@@ -18,6 +19,7 @@
     "idle": 15,
     "run": 10,
     "jump": 4,
+    "slide": 8,
     "attack1": 10,
     "attack2": 10,
     "attack3": 10,
@@ -32,6 +34,7 @@
     "idle": 4,
     "run": 6,
     "jump": 10,
+    "slide": 5,
     "attack1": 5,
     "attack2": 6,
     "attack3": 6,
@@ -48,11 +51,12 @@
     "jump": [ 6, 5, -6, -9 ],
     "jump2": [ 6, 5, -6, -9 ],
     "jump3": [ 6, 5, -6, -9 ],
+    "slide": [ -20, -10, -21, -18.5 ],
     "attack1": [ 5, 3.5, -5, -18.5 ],
     "attack2": [ 5, 1.5, -5, -18.5 ],
     "attack3": [ 5, 1.5, -5, -18.5 ],
-    "air_attack1": [ 8, 3.5, -2, -18.5 ],
-    "air_attack2": [ 8, 3.5, -2, -18.5 ],
+    "air_attack1": [ 8, 3.5, -8, -18.5 ],
+    "air_attack2": [ 8, 3.5, -8, -18.5 ],
     "hit": [ 10, 11.5, 0, -18.5 ]
   },
 

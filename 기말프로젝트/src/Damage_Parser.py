@@ -78,7 +78,9 @@ def chr_hp_recovery(chr, amount):
     _amount = amount
     
     # 유물 :: 마법 꽃
-    if 106 in chr.relicIdList:
-        _amount *= 1.5
+    for r in chr.relic:
+        if r.id == 106:
+            _amount *= 1.5
     chr.hp += round(_amount)
+    chr.hp = min(chr.hp, chr.localMaxHP)
     UI.addString([chr.x, chr.y], str(round(_amount)), (50, 255, 50), 0.5, 0.1)

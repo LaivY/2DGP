@@ -22,7 +22,7 @@ def addRandomRelic():
 
     # 모든 유물을 갖고있을 경우
     if len(inven) >= 10:
-        UI.addString([chr.x, chr.y], '더 이상 획득할 유물이 없습니다.', (255, 255, 255), 1, 0.1)
+        UI.addString([chr.x, chr.y + 5], '더 이상 획득할 유물이 없습니다.', (255, 255, 255), 1, 0.1)
         return
 
     # 중복없이 랜덤으로 한 개 획득
@@ -53,7 +53,7 @@ def addRandomRelic():
             r.flavorText = relic_data[str(_id)]['FLAVOR_TEXT']
             
             inven.append(r)
-            UI.addString([chr.x, chr.y], '유물을 획득했습니다!', (255, 255, 255), 1, 0.1)
+            UI.addString([chr.x, chr.y + 5], '유물을 획득했습니다!', (255, 255, 255), 1, 0.1)
             break
 
     updateChrStat()
