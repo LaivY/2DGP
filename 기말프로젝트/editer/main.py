@@ -36,9 +36,9 @@ def drawTileSet():
                            ini.MAP_WIDTH + 16 + 32 * i + 16, Canvas_HEIGHT - 176 * 2 + 16 + 32 * j + 16)
 
 def drawMobSet():
-    for i in range(1):
+    for i in range(3):
         for j in range(1):
-            mob.clip_draw(32 * i, 32 * i, 32, 32, ini.MAP_WIDTH + 16 + 32 * i, Canvas_HEIGHT - 176 * 2 - 16)
+            mob.clip_draw(32 * i, 32 * j, 32, 32, ini.MAP_WIDTH + 16 + 32 * i, Canvas_HEIGHT - 176 * 2 - 16)
             draw_rectangle(ini.MAP_WIDTH + 32 * i, Canvas_HEIGHT - 176 * 2, ini.MAP_WIDTH + 32 * i + 32, Canvas_HEIGHT - 176 * 2 - 32)
 
 def drawSelection():
@@ -48,17 +48,15 @@ def drawSelection():
             tile.clip_draw(16 * ini.selection[0], 16 * ini.selection[1], 16, 16,
                            ini.mPos[0] // 32 * 32, ini.MAP_HEIGHT - (ini.mPos[1] // 32 * 32), 32, 32)
         elif SELECT_TYPE == 'mob':
-            mob.clip_draw(16 * ini.selection[0], 16 * ini.selection[1], 32, 32,
+            mob.clip_draw(32 * ini.selection[0], 32 * ini.selection[1], 32, 32,
                            ini.mPos[0] // 32 * 32, ini.MAP_HEIGHT - (ini.mPos[1] // 32 * 32))
 
 def drawMap():
     for i in ini.DATA:
         if i[0] == 't':
-            tile.clip_draw(16 * i[1][0], 16 * i[1][1], 16, 16,
-                           i[2], Canvas_HEIGHT - i[3], 32, 32)
+            tile.clip_draw(16 * i[1][0], 16 * i[1][1], 16, 16, i[2], Canvas_HEIGHT - i[3], 32, 32)
         elif i[0] == 'm':
-            mob.clip_draw(16 * i[1][0], 16 * i[1][1], 32, 32,
-                           i[2], Canvas_HEIGHT - i[3])
+            mob.clip_draw(32 * i[1][0], 32 * i[1][1], 32, 32, i[2], Canvas_HEIGHT - i[3])
     draw_rectangle(0, Canvas_HEIGHT - 1, ini.MAP_WIDTH, Canvas_HEIGHT - ini.MAP_HEIGHT)
 
 def addData(x, y):
@@ -71,9 +69,8 @@ def addData(x, y):
                32 * j + ini.MAP_HEIGHT - 176 * 2 <= ini.MAP_HEIGHT - y <= 32 * j + 32 + ini.MAP_HEIGHT - 176 * 2:
                 ini.selection = (i, j)
                 SELECT_TYPE = 'tile'
-                print(i, j, SELECT_TYPE)
     # Mob Select
-    for i in range(1):
+    for i in range(3):
         for j in range(1):
             if 32 * i + ini.MAP_WIDTH <= x <= 32 * i + 32 + ini.MAP_WIDTH and \
                 0 <= ini.MAP_HEIGHT - y <= ini.MAP_HEIGHT - 176 * 2:

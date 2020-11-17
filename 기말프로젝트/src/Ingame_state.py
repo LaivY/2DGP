@@ -47,10 +47,14 @@ def loadMob():
     for i in mobInfo:
         temp = i.split()
         if temp[0] == 'm':
-            if (int(temp[1]), int(temp[2])) == (0, 0):
-                mob.append(Mob(100, int(temp[3]), int(temp[4])))
-            elif (int(temp[1]), int(temp[2])) == (0, 1):
-                mob.append(Mob(101, int(temp[3]), int(temp[4])))
+            type = (int(temp[1]), int(temp[2]))
+            pos = (int(temp[3]), int(temp[4]))
+            if type == (0, 0):
+                mob.append(Mob(100, *pos))
+            elif type == (1, 0):
+                mob.append(Mob(101, *pos))
+            elif type == (2, 0):
+                mob.append(Mob(102, *pos))
     for i in mob: i.load()
 
 def chr_collide_check():
@@ -76,7 +80,7 @@ def chr_collide_check():
         elif (tile[3] < chr.hitBox[1] < tile[1] or tile[3] < chr.hitBox[3] < tile[1]) and \
              (min(chr.hitBox[0], chr.hitBox[2]) + chr.dx <= tile[2] <= min(chr.hitBox[0], chr.hitBox[2]) or
               tile[0] < min(chr.hitBox[0], chr.hitBox[2]) + chr.dx < tile[2]) and chr.dx < 0:
-            if chr.state == 'run' and chr.subState == 'none':
+            if (chr.state == 'run' or chr.state == 'slide') and chr.subState == 'none':
                 RESULT = [True, RESULT[1] + tile[2] + abs(chr.hitBox[0] - chr.hitBox[2]) - chr.dx, RESULT[2], RESULT[3], RESULT[4]]
             else:
                 RESULT = [True, RESULT[1] + tile[2] + abs(chr.hitBox[0] - chr.hitBox[2]) + chr.dx, RESULT[2], RESULT[3], RESULT[4]]
@@ -85,10 +89,16 @@ def chr_collide_check():
         elif (tile[3] < chr.hitBox[1] < tile[1] or tile[3] < chr.hitBox[3] < tile[1]) and \
              (max(chr.hitBox[0], chr.hitBox[2]) <= tile[0] <= max(chr.hitBox[0], chr.hitBox[2]) + chr.dx or
               tile[0] < max(chr.hitBox[0], chr.hitBox[2]) + chr.dx < tile[2]) and chr.dx > 0:
-            if chr.state == 'run' and chr.subState == 'none':
+            if (chr.state == 'run' or chr.state == 'slide') and chr.subState == 'none':
                 RESULT = [True, RESULT[1] + tile[0] - abs(chr.hitBox[0] - chr.hitBox[2]) - chr.dx, RESULT[2], RESULT[3], RESULT[4]]
             else:
                 RESULT = [True, RESULT[1] + tile[0] - abs(chr.hitBox[0] - chr.hitBox[2]) + chr.dx, RESULT[2], RESULT[3], RESULT[4]]
+
+        # 맵 밖으로 못나가게
+        if max(chr.hitBox[0], chr.hitBox[2]) + chr.dx > map.size[0] and chr.dir == 'RIGHT':
+            RESULT = [True, map.size[0] - abs(chr.hitBox[0] - chr.hitBox[2]) - chr.dx, RESULT[2], RESULT[3], RESULT[4]]
+        elif min(chr.hitBox[0], chr.hitBox[2]) + chr.dx < 0 and chr.dir == 'LEFT':
+            RESULT = [True, abs(chr.hitBox[0] - chr.hitBox[2]) - chr.dx, RESULT[2], RESULT[3], RESULT[4]]
 
         if RESULT[0]: return RESULT
     return [False]
@@ -100,7 +110,7 @@ def chr_landing_check():
         # 2. 히트박스의 하단 + dy <= 지형의 상단 <= 히트박스의 하단이여야한다.
         if (tile[0] < chr.hitBox[0] < tile[2] or tile[0] < chr.hitBox[2] < tile[2]) and \
             chr.hitBox[3] + chr.dy <= tile[1] <= chr.hitBox[3]:
-            return True, tile[1] + 37 / 2
+            return True, tile[1] + abs(chr.MOTION_HITBOX[chr.state][3]) #37 / 2
     return [False]
 
 def chr_portal_check():
@@ -145,6 +155,8 @@ def mob_hit_check(hitBox):
     HIT = False
     if chr.attack_range == (0, 0, 0, 0):
         return [False]
+    
+    # 몬스터의 피격 범위의 한 점이 캐릭터의 공격 범위 안에 있을 경우
     left = min(chr.attack_range[0], chr.attack_range[2])
     right = max(chr.attack_range[0], chr.attack_range[2])
     top = max(chr.attack_range[1], chr.attack_range[3])
@@ -153,6 +165,16 @@ def mob_hit_check(hitBox):
     if left < hitBox[2] < right and bottom < hitBox[1] < top: HIT = True
     if left < hitBox[0] < right and bottom < hitBox[3] < top: HIT = True
     if left < hitBox[2] < right and bottom < hitBox[3] < top: HIT = True
+
+    # 몬스터의 피격 범위 안에 캐릭터의 공격 범위가 있을 경우
+    mLeft = min(hitBox[0], hitBox[2])
+    mRight = max(hitBox[0], hitBox[2])
+    mTop = max(hitBox[1], hitBox[3])
+    mBot = min(hitBox[1], hitBox[3])
+    if mLeft < left < mRight and mLeft < right < mRight and \
+        mBot < top < mTop and mBot < bottom < mTop:
+        HIT = True
+
     if HIT:
         return [True, chr.state, chr.ad]
     return [False]
@@ -164,7 +186,10 @@ def mob_landing_check(hitBox, x, dy):
             return True, tile[1] + abs(hitBox[1] - hitBox[3])
     return [False]
 
-def mob_collide_check(hitBox, dx, dy):
+def mob_collide_check(mob):
+    hitBox = mob.hitBox
+    dx, dy = mob.dx, mob.dy
+
     for tile in map.tileRect:
         RESULT = [False, 0, 0, dx, dy]
 
@@ -175,20 +200,20 @@ def mob_collide_check(hitBox, dx, dy):
 
         # 좌측
         elif (tile[3] < hitBox[1] < tile[1] or tile[3] < hitBox[3] < tile[1]) and \
-             (min(hitBox[0], hitBox[2]) + dx <= tile[2] <= min(hitBox[0], hitBox[2]) or
+             (min(hitBox[0], hitBox[2]) + dx < tile[2] < min(hitBox[0], hitBox[2]) or
               tile[0] < min(hitBox[0], hitBox[2]) + dx < tile[2]) and dx < 0:
             RESULT = [True, RESULT[1] + tile[2] + (abs(hitBox[0] - hitBox[2]) / 2), RESULT[2], RESULT[3], RESULT[4]]
 
         # 우측
         elif (tile[3] < hitBox[1] < tile[1] or tile[3] < hitBox[3] < tile[1]) and \
-             (max(hitBox[0], hitBox[2]) <= tile[0] <= max(hitBox[0], hitBox[2]) + dx or
+             (max(hitBox[0], hitBox[2]) < tile[0] < max(hitBox[0], hitBox[2]) + dx or
               tile[0] < max(hitBox[0], hitBox[2]) + dx < tile[2]) and dx > 0:
             RESULT = [True, RESULT[1] + tile[0] - (abs(hitBox[0] - hitBox[2]) / 2), RESULT[2], RESULT[3], RESULT[4]]
 
         # 맵밖으로 나가는 것 체크
-        if max(hitBox[0], hitBox[2]) + dx >= map.size[0]:
+        if max(hitBox[0], hitBox[2]) + dx >= map.size[0] and mob.dir == 'RIGHT':
             RESULT = [True, map.size[0] - (abs(hitBox[0] - hitBox[2]) / 2), RESULT[2], RESULT[3], RESULT[4]]
-        elif min(hitBox[0], hitBox[2]) - dx <= 0:
+        elif min(hitBox[0], hitBox[2]) - dx <= 0 and mob.dir == 'LEFT':
             RESULT = [True, abs(hitBox[0] - hitBox[2]) / 2, RESULT[2], RESULT[3], RESULT[4]]
 
         if RESULT[0]: return RESULT

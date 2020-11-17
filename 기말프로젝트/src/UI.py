@@ -40,13 +40,13 @@ def addString(pos, string, color, time, dy):
 def drawRelic():
     chr = Ingame_state.chr
     for i in range(len(chr.relic)):
-        relic_image.clip_draw(chr.relic[i].id % 100 * 128, (chr.relic[i].id // 100 - 1) * 128, 128, 128, 20 + 32 * i, 600 - (chr.relic[i].id // 100) * 20, 64, 64)
+        relic_image.clip_draw(chr.relic[i].id % 100 * 128, (chr.relic[i].id // 100 - 1) * 128, 128, 128, 20 + 32 * i, 580, 64, 64)
         if chr.relic[i].stack != -1:
             if chr.relic[i].isActive:
                 rgb = (50, 255, 50)
             else:
                 rgb = (255, 255, 255)
-            Font12.draw(26 + 32 * i, 600 - (chr.relic[i].id // 100) * 20 - 8, str(chr.relic[i].stack), rgb)
+            Font12.draw(26 + 32 * i, 580 - 8, str(chr.relic[i].stack), rgb)
 
 def drawRelicDesc():
     r = Ingame_state.chr.relic
@@ -111,9 +111,8 @@ def drawChrInfoDesc():
 
 def printStringData():
     for i in stringData:
-        cx, cy = GetTextDimensions(i[1], 7, '모리스9')
-
-        Font12.draw(i[0][0] - cx, i[0][1] + cy + 5, i[1], i[2])
+        cx, cy = get_text_extent(Font12, i[1])
+        Font12.draw(i[0][0] - (cx / 5), i[0][1] + cy, i[1], i[2])
         i[3] -= Framework.delta_time
         i[0][1] += i[4]
         if i[3] <= 0:
@@ -126,18 +125,7 @@ def draw():
     drawChrInfoDesc()
     printStringData()
 
-def GetTextDimensions(text, points, font):
-    # 문자열 길이 반환 함수
-    class SIZE(ctypes.Structure):
-        _fields_ = [("cx", ctypes.c_long), ("cy", ctypes.c_long)]
-
-    hdc = ctypes.windll.user32.GetDC(0)
-    hfont = ctypes.windll.gdi32.CreateFontA(points, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, font)
-    hfont_old = ctypes.windll.gdi32.SelectObject(hdc, hfont)
-
-    size = SIZE(0, 0)
-    ctypes.windll.gdi32.GetTextExtentPoint32W(hdc, text, len(text), ctypes.byref(size))
-
-    ctypes.windll.gdi32.SelectObject(hdc, hfont_old)
-    ctypes.windll.gdi32.DeleteObject(hfont)
-    return (size.cx, size.cy)
+def get_text_extent(font, text):
+    w, h = c_int(), c_int()
+    pico2d.TTF_SizeText(font.font, text.encode('utf-8'), ctypes.byref(w), ctypes.byref(h))
+    return w.value, h.value

@@ -1,11 +1,9 @@
 import Ingame_state
 import Damage_Parser
-import UI
-#import json
 from pico2d import *
 from random import randint
 
-debug = False
+debug = True
 
 class Mob:
     # 몬스터 이미지
@@ -88,11 +86,13 @@ class Mob:
                                            self.sySize * ySheet, self.sxSize, self.sySize, 0, 'h', self.x, self.y, self.xSize, self.ySize)
 
     def update_mob_order(self, delta_time):
+        if self.state == 'hit':
+            return
+
         # 순찰
         if self.order == 'patrol':
             # 만약 발견 범위 안에 있다면 approach 명령
-            if ((self.dir == 'LEFT' and 0 < self.x - Ingame_state.chr.x < 150 and abs(self.y - Ingame_state.chr.y) < 30) or
-               (self.dir == 'RIGHT' and 0 < Ingame_state.chr.x - self.x < 150 and abs(self.y - Ingame_state.chr.y) < 30)) and self.state != 'attack':
+            if check_mob_can_find_chr(self, Ingame_state.chr):
                 self.frame = 0
                 self.order = 'approach'
                 self.order_timer = 0
@@ -117,13 +117,13 @@ class Mob:
         # 다가가기
         if self.order == 'approach':
             # 만약 발견 범위 밖에 있다면 wait 명령
-            if abs(Ingame_state.chr.x - self.x) > 150 or abs(Ingame_state.chr.y - self.y) > 30:
+            if not check_mob_can_find_chr(self, Ingame_state.chr):
                 self.frame = 0
                 self.order = 'wait'
                 self.order_timer = 0
 
             # 만약 공격할 수 있는 거리에 있다면 attack 명령
-            elif abs(Ingame_state.chr.x - self.x) < 30 and abs(Ingame_state.chr.y - self.y) < 10:
+            elif check_mob_can_attack_chr(self, Ingame_state.chr):
                 self.frame = 0
                 self.order = 'attack'
                 self.order_timer = 0
@@ -166,7 +166,7 @@ class Mob:
                 return
 
         # Collide Check
-        Collide_Result = Ingame_state.mob_collide_check(self.hitBox, self.dx, self.dy)
+        Collide_Result = Ingame_state.mob_collide_check(self)
         if Collide_Result[0]:
             if Collide_Result[1] != 0: self.x = Collide_Result[1]
             if Collide_Result[2] != 0: self.y = Collide_Result[2]
@@ -208,6 +208,9 @@ class Mob:
         elif self.id == 101:
             attack_start = 4
             attack_end = 6
+        elif self.id == 102:
+            attack_start = 4
+            attack_end = 5
 
         if self.state == 'attack':
             if self.MOTION_DELAY[self.state] * attack_start < self.frame < self.MOTION_DELAY[self.state] * attack_end:
@@ -242,6 +245,13 @@ class Mob:
         if _left < right < _right and _bot < top < _top: HIT = True
         if _left < right < _right and _bot < bot < _top: HIT = True
 
+        # 피격 박스와 공격 범위가 포개어져있는 경우
+        if  _left < left < _right and \
+            _left < right < _right and \
+            top > _top and \
+            bot < _bot:
+            HIT = True
+
         if HIT and Ingame_state.chr.state != 'die' and Ingame_state.chr.invincible_time <= 0:
             Damage_Parser.mob_attack_chr(self, Ingame_state.chr)
 
@@ -252,3 +262,25 @@ class Mob:
         self.update_mob_hit_check()
         self.update_mob_attack_range()
         self.update_mob_attack_chr_check()
+
+def check_mob_can_find_chr(mob, chr):
+    if mob.state == 'attack': return False
+    if mob.id == 100: # 슬라임
+        if   mob.dir == 'LEFT'  and 0 < mob.x - chr.x < 150 and abs(mob.y - chr.y) < 30: return True
+        elif mob.dir == 'RIGHT' and 0 < chr.x - mob.x < 150 and abs(mob.y - chr.y) < 30: return True
+    elif mob.id == 101: # 가시
+        if   mob.dir == 'LEFT'  and 0 < mob.x - chr.x < 150 and abs(mob.y - chr.y) < 30: return True
+        elif mob.dir == 'RIGHT' and 0 < chr.x - mob.x < 150 and abs(mob.y - chr.y) < 30: return True
+    elif mob.id == 102: # 쓰레기
+        if   mob.dir == 'LEFT'  and 0 < mob.x - chr.x < 170 and abs(mob.y - chr.y) < 30: return True
+        elif mob.dir == 'RIGHT' and 0 < chr.x - mob.x < 170 and abs(mob.y - chr.y) < 30: return True
+
+def check_mob_can_attack_chr(mob, chr):
+    if mob.id == 100: # 슬라임
+        if   mob.dir == 'LEFT'  and 0 < mob.x - chr.x < 30 and abs(mob.y - chr.y) < 10: return True
+        elif mob.dir == 'RIGHT' and 0 < chr.x - mob.x < 30 and abs(mob.y - chr.y) < 10: return True
+    elif mob.id == 101: # 가시
+        if abs(mob.x - chr.x) < 30 and abs(mob.y - chr.y) < 10: return True
+    elif mob.id == 102: # 쓰레기
+        if   mob.dir == 'LEFT' and 0 < mob.x - chr.x < 60 and abs(mob.y - chr.y) < 10:  return True
+        elif mob.dir == 'RIGHT' and 0 < chr.x - mob.x < 60 and abs(mob.y - chr.y) < 10: return True

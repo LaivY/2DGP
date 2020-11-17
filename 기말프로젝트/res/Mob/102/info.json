@@ -5,19 +5,19 @@
 		"ySize": 64,
 		"sxSize": 64,
 		"sySize": 64,
-		"hp": 35,
-		"ad": 5,
-		"df": 0,
+		"hp": 30,
+		"ad": 10,
+		"df": 1,
 		"speed": 0
 	},
 
 	{
 		"TYPE": "YSHEET",
-		"attack": 3,
-		"die": 2,
-		"hit": 2,
-		"idle": 1,
-		"move": 0
+		"attack": 0,
+		"die": 1,
+		"hit": 1,
+		"idle": 2,
+		"move": 3
 	},
 
 	{
@@ -31,24 +31,24 @@
 
 	{
 		"TYPE": "MOTION_FRAME",
-		"attack": 8,
-		"die": 9,
+		"attack": 6,
+		"die": 11,
 		"hit": 3,
 		"idle": 6,
-		"move": 13
+		"move": 6
 	},
 
 	{
 		"TYPE": "MOTION_HITBOX",
-		"attack": [ 8, -4, -8, -16 ],
-		"die": [ 8, -4, -8, -16 ],
-		"hit": [ 8, -4, -8, -16 ],
-		"idle": [ 8, -4, -8, -16 ],
-		"move": [ 8, -4, -8, -16 ]
+		"attack": [ 25, 8, -25, -18 ],
+		"die": [ 25, 8, -25, -18 ],
+		"hit": [ 25, 8, -25, -18 ],
+		"idle": [ 25, 8, -25, -18 ],
+		"move": [ 25, 8, -25, -18 ]
 	},
 
 	{
 		"TYPE": "MOTION_ATTACK_RANGE",
-		"attack": [ 25, 16, -25, -16 ]
+		"attack": [ 50, 8, 0, -18 ]
 	}
 ]

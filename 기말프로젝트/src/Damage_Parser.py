@@ -13,6 +13,10 @@ def chr_attack_mob(mob, chr, dmg):
             else:
                 r.stack += 1
 
+    if mob.x < chr.x:
+        mob.dir = 'RIGHT'
+    else:
+        mob.dir = 'LEFT'
     mob.dx = 0
     mob.hitBy = chr.state
     mob.hp -= max(_dmg - mob.df, 0)
@@ -81,6 +85,7 @@ def chr_hp_recovery(chr, amount):
     for r in chr.relic:
         if r.id == 106:
             _amount *= 1.5
+
     chr.hp += round(_amount)
     chr.hp = min(chr.hp, chr.localMaxHP)
     UI.addString([chr.x, chr.y], str(round(_amount)), (50, 255, 50), 0.5, 0.1)

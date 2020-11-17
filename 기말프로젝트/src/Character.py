@@ -3,7 +3,7 @@ import Relic
 import UI
 from pico2d import *
 
-debug = False
+debug = True
 
 # 달리기 입력 무시
 RUN_EXCEPTION = (
@@ -40,7 +40,7 @@ class Character:
         ### 캐릭터 시스템 관련 변수들 ###
         self.frame, self.timer = 0, 0                                           # 프레임, 타이머
         self.state, self.subState = 'idle', 'jump'                              # 상태, 서브상태
-        self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 400, 150, 0, 0   # 좌우, 좌표와 움직임속도
+        self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 400, 400, 0, 0   # 좌우, 좌표와 움직임속도
         self.relicGainPos = []                                                  # 유물 획득 위치 정보
 
         ### 캐릭터 피격, 공격 관련 변수들 ###
@@ -275,6 +275,8 @@ class Character:
             if not Landing_Result[0]:
                 self.state = 'idle'
                 self.subState = 'jump'
+                self.frame = 0
+                self.dx = 0
 
         # 사망
         elif self.state == 'die':
