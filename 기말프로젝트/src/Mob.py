@@ -3,7 +3,7 @@ import Damage_Parser
 from pico2d import *
 from random import randint
 
-debug = True
+debug = False
 
 class Mob:
     # 몬스터 이미지

@@ -41,7 +41,7 @@ def drawRelic():
     chr = Ingame_state.chr
     for i in range(len(chr.relic)):
         relic_image.clip_draw(chr.relic[i].id % 100 * 128, (chr.relic[i].id // 100 - 1) * 128, 128, 128, 20 + 32 * i, 580, 64, 64)
-        if chr.relic[i].stack != -1:
+        if chr.relic[i].condition != -1:
             if chr.relic[i].isActive:
                 rgb = (50, 255, 50)
             else:

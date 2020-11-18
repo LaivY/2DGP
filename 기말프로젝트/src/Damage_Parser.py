@@ -4,14 +4,17 @@ import Relic
 def chr_attack_mob(mob, chr, dmg):
     _dmg = dmg
 
-    # 유물 :: 펜 촉
     for r in chr.relic:
-        if r.id == 105:
+        # 펜 촉
+        if r.id == 104:
             if r.isActive:
                 r.stack, r.isActive = 0, False
                 _dmg *= 2
             else:
                 r.stack += 1
+        # 수리검
+        elif r.id == 205:
+            r.stack += 1
 
     if mob.x < chr.x:
         mob.dir = 'RIGHT'
@@ -31,23 +34,36 @@ def chr_attack_mob(mob, chr, dmg):
         mob.order = 'none'
         mob.frame = 0
 
-        # 유물 :: 피가 담긴 병
         for r in chr.relic:
-            if r.id == 104:
+            # 피가 담긴 병
+            if r.id == 105:
                 chr_hp_recovery(chr, 2)
+            # 고기 덩어리
+            elif r.id == 200 and r.isActive:
+                chr_hp_recovery(chr, 12)
 
     Relic.updataRelicStack()
+    Relic.updateChrStat()
 
 def mob_attack_chr(mob, chr):
     _dmg = mob.ad - chr.df
 
-    # 유물 :: 조개화석, 향로
     for r in chr.relic:
-        if r.id == 108 and r.isActive:
+        # 청동 비늘
+        if r.id == 103:
+            chr_attack_mob(mob, chr, 3)
+        # 표창
+        elif r.id == 206:
+            r.stack += 1
+        # 토리이
+        elif r.id == 305 and 1 <= _dmg <= 5:
+            _dmg = 1
+        # 조개 화석
+        elif r.id == 304 and r.isActive and _dmg >= 1:
             r.stack, _dmg = 0, 0
-            break
-        elif r.id == 109:
-            if r.isActive:
+        # 향로
+        elif r.id == 306:
+            if r.isActive and _dmg >= 1:
                 r.stack, _dmg = 0, 0
             else:
                 r.stack += 1
@@ -67,25 +83,31 @@ def mob_attack_chr(mob, chr):
     chr.hp -= max(_dmg, 0)
     UI.addString([chr.x, chr.y], str(max(_dmg, 0)), (255, 50, 50), 0.5, 0.1)
 
-    # 유물 :: 청동 비늘
     for r in chr.relic:
-        if r.id == 103:
-            chr_attack_mob(mob, chr, 3)
+        # 도마뱀 꼬리
+        if r.id == 300 and r.isActive and chr.hp <= 0:
+            chr_hp_recovery(chr, chr.localMaxHP // 2)
+            r.stack = 0
+            break
 
     if chr.hp <= 0:
         chr.state = 'die'
         chr.dx = 0
 
     Relic.updataRelicStack()
+    Relic.updateChrStat()
 
 def chr_hp_recovery(chr, amount):
     _amount = amount
     
     # 유물 :: 마법 꽃
     for r in chr.relic:
-        if r.id == 106:
+        if r.id == 301:
             _amount *= 1.5
 
     chr.hp += round(_amount)
     chr.hp = min(chr.hp, chr.localMaxHP)
     UI.addString([chr.x, chr.y], str(round(_amount)), (50, 255, 50), 0.5, 0.1)
+
+    Relic.updataRelicStack()
+    Relic.updateChrStat()

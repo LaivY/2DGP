@@ -3,7 +3,7 @@ import Relic
 import UI
 from pico2d import *
 
-debug = True
+debug = False
 
 # 달리기 입력 무시
 RUN_EXCEPTION = (
@@ -120,7 +120,7 @@ class Character:
         # 삼단점프 :: 윙 부츠
         elif (e.key, e.type) == (SDLK_c, SDL_KEYDOWN) and self.subState == 'jump2':
             for r in self.relic:
-                if r.id == 107:
+                if r.id == 303:
                     self.subState = 'jump3'
                     self.frame, self.timer = 0, 0
                     self.y, self.dy = self.y + 5, 5
@@ -132,7 +132,7 @@ class Character:
             if self.state not in RUN_EXCEPTION:
                 self.dir = 'LEFT'
                 self.state = 'run'
-                self.dx = -2
+                self.dx = -2 * (1 + self.speed / 100)
 
         elif (e.key, e.type) == (SDLK_LEFT, SDL_KEYUP):
             self.leftKeyDown = False
@@ -146,7 +146,7 @@ class Character:
             if self.state not in RUN_EXCEPTION:
                 self.dir = 'RIGHT'
                 self.state = 'run'
-                self.dx = 2
+                self.dx = 2 * (1 + self.speed / 100)
 
         elif (e.key, e.type) == (SDLK_RIGHT, SDL_KEYUP):
             self.rightKeyDown = False
@@ -160,12 +160,12 @@ class Character:
                 self.state = 'slide'
                 self.frame, self.timer = 0, 0
                 self.dir = 'LEFT'
-                self.dx = -5
+                self.dx = -5 * (1 + self.speed / 100)
             elif self.rightKeyDown:
                 self.state = 'slide'
                 self.frame, self.timer = 0, 0
                 self.dir = 'RIGHT'
-                self.dx = 5
+                self.dx = 5 * (1 + self.speed / 100)
 
         # 상호작용
         elif (e.key, e.type) == (SDLK_z, SDL_KEYDOWN) and (self.state == 'idle'):
@@ -217,12 +217,12 @@ class Character:
                 self.state = 'run'
                 self.dir = 'RIGHT'
                 if not Ingame_state.chr_collide_check()[0]:
-                    self.dx = 2
+                    self.dx = 2 * (1 + self.speed / 100)
             elif self.leftKeyDown:
                 self.state = 'run'
                 self.dir = 'LEFT'
                 if not Ingame_state.chr_collide_check()[0]:
-                    self.dx = -2
+                    self.dx = -2 * (1 + self.speed / 100)
 
             # Fallen Check
             Landing_Result = Ingame_state.chr_landing_check()
@@ -262,9 +262,9 @@ class Character:
             self.timer += delta_time
             if self.timer > delta_time * 6:
                 if self.dir == 'LEFT' and self.dx < 0:
-                    self.dx += 1
+                    self.dx += (1 + self.speed / 100)
                 elif self.dir == 'RIGHT' and self.dx > 0:
-                    self.dx -= 1
+                    self.dx -= (1 + self.speed / 100)
                 self.timer = 0
             if self.frame >= self.MOTION_FRAME[self.state] * self.MOTION_DELAY[self.state]:
                 self.state = 'idle'
@@ -313,9 +313,9 @@ class Character:
             else:
                 # keep going if now pressing button
                 if self.leftKeyDown:
-                    self.dx = -2
+                    self.dx = -2 * (1 + self.speed / 100)
                 elif self.rightKeyDown:
-                    self.dx = 2
+                    self.dx = 2 * (1 + self.speed / 100)
 
         # 무적시간 감소
         if self.invincible_time > 0:
@@ -324,18 +324,20 @@ class Character:
                 self.invincible_time = 0
 
         # Collide Check
-        Collide_Result = Ingame_state.chr_collide_check()
-        if Collide_Result[0]:
-            if Collide_Result[1] != 0:
-                if self.dx > 0:
-                    self.x = Collide_Result[1] + self.MOTION_HITBOX[self.state][0]
-                else:
-                    self.x = Collide_Result[1] - self.MOTION_HITBOX[self.state][0]
-            if Collide_Result[2] != 0: self.y = Collide_Result[2]
-            self.dx, self.dy = Collide_Result[3], Collide_Result[4]
+        if self.state in ['run', 'slide', 'hit'] or self.subState in 'jump':
+            Collide_Result = Ingame_state.chr_collide_check()
+            if Collide_Result[0]:
+                if Collide_Result[1] != 0:
+                    if self.dx > 0:
+                        self.x = Collide_Result[1] + self.MOTION_HITBOX[self.state][0]
+                    else:
+                        self.x = Collide_Result[1] - self.MOTION_HITBOX[self.state][0]
+                if Collide_Result[2] != 0:
+                    self.y = Collide_Result[2]
+                self.dx, self.dy = Collide_Result[3], Collide_Result[4]
 
         # Chr Pos Update
-        self.x += self.dx * (1 + self.speed / 100)
+        self.x += self.dx# * (1 + self.speed / 100)
         self.y += self.dy
 
     def update_chr_hitbox(self):
