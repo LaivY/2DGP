@@ -32,13 +32,11 @@ def addRandomRelic():
         rarity = randint(0, 99)
 
         if 0 <= rarity < 50:
-            _id = randint(100, 106)
+            _id = randint(100, 108)
         elif 50 <= rarity <= 75:
-            _id = randint(200, 206)
+            _id = randint(200, 208)
         else:
             _id = randint(300, 306)
-
-        _id = 303
 
         for i in inven:
             if i.id == _id:
@@ -70,13 +68,17 @@ def addRandomRelic():
             elif r.id == 205 or r.id == 206:
                 r.stack = 0
                 r.condition = 3
+            # 음양성
+            elif r.id == 207:
+                r.stack = 0
+                r.condition = 5
             # 향로
             elif r.id == 306:
                 r.stack = 0
                 r.condition = 6
             
             inven.append(r)
-            UI.addString([chr.x, chr.y + 5], str(relic_data[str(_id)]['NAME']) + '을(를) 획득했습니다!', (255, 255, 255), 1, 0.1)
+            UI.addString([chr.x, chr.y + 5], str(relic_data[str(_id)]['NAME']) + '을(를) 획득했습니다!', (255, 255, 255), 1, 0.1, 12)
             break
 
     # 마트료시카
@@ -92,8 +94,8 @@ def updateChrStat():
     chr = Ingame_state.chr
 
     # 계산 전에 캐릭터 스탯 초기화
-    chr.maxHp, chr.localMaxHP = 50, 50
-    chr.ad, chr.AS, chr.df, chr.speed, = 5, 0, 0, 0
+    chr.maxHp, chr.maxHP = 50, 50
+    chr.ad, chr.AS, chr.df, chr.cri, = 5, 0, 0, 5
 
     # 유물로 인한 스탯 상승
     for r in chr.relic:
@@ -110,15 +112,21 @@ def updateChrStat():
         elif r.id == 106:
             chr.ad += 2
             chr.df -= 1
+        # 닌자 두루마리
+        elif r.id == 107:
+            chr.AS += 15
+        # 도박 칩
+        elif r.id == 108:
+            chr.cri += 15
         # 리의 와플
         elif r.id == 201:
-            chr.localMaxHP += 12
+            chr.maxHP += 12
             if r.stack == 1:
                 r.stack = 0
-                Damage_Parser.chr_hp_recovery(chr, chr.localMaxHP)
+                Damage_Parser.chr_hp_recovery(chr, chr.maxHP)
         # 배
         elif r.id == 203:
-            chr.localMaxHP += 10
+            chr.maxHP += 10
             if r.stack == 1:
                 r.stack = 0
                 Damage_Parser.chr_hp_recovery(chr, 10)
@@ -131,15 +139,21 @@ def updateChrStat():
         # 표창
         elif r.id == 206 and r.isActive:
             chr.ad += r.stack // 3
+        # 음양성
+        elif r.id == 207 and r.isActive:
+            chr.cri += r.stack
+        # 작은 집
+        elif r.id == 208:
+            chr.ad += 1
+            chr.AS += 10
+            chr.cri += 10
+            chr.df += 1
         # 망고
         elif r.id == 302:
-            chr.localMaxHP += 14
+            chr.maxHP += 14
             if r.stack == 1:
                 r.stack = 0
                 Damage_Parser.chr_hp_recovery(chr, 14)
-        # 윙 부츠
-        elif r.id == 303:
-            chr.speed += 20
 
     # 공격속도 적용
     chr.MOTION_DELAY['attack1'] = int(chr.MOTION_DELAY_ORIGIN['attack1'] * (100 - chr.AS) / 100)
@@ -153,7 +167,7 @@ def updataRelicStack():
     for r in chr.relic:
         # 룬 12면체
         if r.id == 101:
-            if chr.hp == chr.localMaxHP:
+            if chr.hp == chr.maxHP:
                 r.isActive = True
                 r.stack = 1
             else:
@@ -162,7 +176,7 @@ def updataRelicStack():
 
         # 고기 덩어리, 붉은 해골
         elif r.id == 200 or r.id == 204:
-            if chr.hp <= chr.localMaxHP / 2:
+            if chr.hp <= chr.maxHP / 2:
                 r.isActive = True
                 r.stack = 1
             else:

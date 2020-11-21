@@ -1,5 +1,6 @@
 import UI
 import Relic
+from random import randint
 
 def chr_attack_mob(mob, chr, dmg):
     _dmg = dmg
@@ -16,14 +17,31 @@ def chr_attack_mob(mob, chr, dmg):
         elif r.id == 205:
             r.stack += 1
 
+    # 치명타
+    if chr.cri >= randint(0, 99):
+        for r in chr.relic:
+            # 음양성
+            if r.id == 207:
+                r.stack = 0
+                r.isActive = False
+        _dmg *= 2
+        UI.addString([mob.x, mob.y], str(max(_dmg - mob.df, 0)), (255, 100, 100), 0.6, 0.1, 16)
+    # 일반
+    else:
+        for r in chr.relic:
+            # 음양성
+            if r.id == 207:
+                r.stack += 5
+        UI.addString([mob.x, mob.y], str(max(_dmg - mob.df, 0)), (255, 255, 255), 0.6, 0.1, 12)
+
+    mob.dx = 0
+    mob.hitBy = chr.state
+    mob.hp -= max(_dmg - mob.df, 0)
+
     if mob.x < chr.x:
         mob.dir = 'RIGHT'
     else:
         mob.dir = 'LEFT'
-    mob.dx = 0
-    mob.hitBy = chr.state
-    mob.hp -= max(_dmg - mob.df, 0)
-    UI.addString([mob.x, mob.y], str(max(_dmg - mob.df, 0)), (255, 255, 255), 0.6, 0.1)
 
     if mob.state != 'attack':
         mob.state = 'hit'
@@ -81,12 +99,12 @@ def mob_attack_chr(mob, chr):
 
     chr.invincible_time = 1
     chr.hp -= max(_dmg, 0)
-    UI.addString([chr.x, chr.y], str(max(_dmg, 0)), (255, 50, 50), 0.5, 0.1)
+    UI.addString([chr.x, chr.y], str(max(_dmg, 0)), (255, 50, 50), 0.5, 0.1, 12)
 
     for r in chr.relic:
         # 도마뱀 꼬리
         if r.id == 300 and r.isActive and chr.hp <= 0:
-            chr_hp_recovery(chr, chr.localMaxHP // 2)
+            chr_hp_recovery(chr, chr.maxHP // 2)
             r.stack = 0
             break
 
@@ -106,8 +124,8 @@ def chr_hp_recovery(chr, amount):
             _amount *= 1.5
 
     chr.hp += round(_amount)
-    chr.hp = min(chr.hp, chr.localMaxHP)
-    UI.addString([chr.x, chr.y], str(round(_amount)), (50, 255, 50), 0.5, 0.1)
+    chr.hp = min(chr.hp, chr.maxHP)
+    UI.addString([chr.x, chr.y], str(round(_amount)), (50, 255, 50), 0.5, 0.1, 12)
 
     Relic.updataRelicStack()
     Relic.updateChrStat()

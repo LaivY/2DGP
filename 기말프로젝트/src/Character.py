@@ -49,8 +49,8 @@ class Character:
         self.invincible_time = 0                                                # 남은 무적 시간
 
         ### 캐릭터 스탯 관련 변수들 ###
-        self.maxHp, self.localMaxHP, self.hp = 50, 50, 50                       # 원래 최대HP, 최종 최대HP, 현재HP
-        self.ad, self.AS, self.df, self.speed, = 5, 0, 0, 0                     # 공격력, 공격속도, 방어력, x축 추가 이동속도
+        self.maxHP, self.hp = 50, 50                                            # 최대HP, 현재HP
+        self.ad, self.AS, self.cri, self.df  = 5, 0, 5, 0                       # 공격력, 공격속도, 치명타, 방어력
         self.relic = []                                                         # 유물
 
         ### 캐릭터 모션별 범위 변수들 :: JSON ###
@@ -132,7 +132,7 @@ class Character:
             if self.state not in RUN_EXCEPTION:
                 self.dir = 'LEFT'
                 self.state = 'run'
-                self.dx = -2 * (1 + self.speed / 100)
+                self.dx = -2
 
         elif (e.key, e.type) == (SDLK_LEFT, SDL_KEYUP):
             self.leftKeyDown = False
@@ -146,7 +146,7 @@ class Character:
             if self.state not in RUN_EXCEPTION:
                 self.dir = 'RIGHT'
                 self.state = 'run'
-                self.dx = 2 * (1 + self.speed / 100)
+                self.dx = 2
 
         elif (e.key, e.type) == (SDLK_RIGHT, SDL_KEYUP):
             self.rightKeyDown = False
@@ -160,12 +160,12 @@ class Character:
                 self.state = 'slide'
                 self.frame, self.timer = 0, 0
                 self.dir = 'LEFT'
-                self.dx = -5 * (1 + self.speed / 100)
+                self.dx = -5
             elif self.rightKeyDown:
                 self.state = 'slide'
                 self.frame, self.timer = 0, 0
                 self.dir = 'RIGHT'
-                self.dx = 5 * (1 + self.speed / 100)
+                self.dx = 5
 
         # 상호작용
         elif (e.key, e.type) == (SDLK_z, SDL_KEYDOWN) and (self.state == 'idle'):
@@ -202,7 +202,7 @@ class Character:
     def interaction_handler(self, type):
         if (type[0], type[1]) == (0, 1): # 유물 상자
             if (Ingame_state.map.id, type[2], type[3]) in self.relicGainPos:
-                UI.addString([self.x, self.y], '상자가 비어있습니다.', (255, 255, 255), 1, 0.1)
+                UI.addString([self.x, self.y], '상자가 비어있습니다.', (255, 255, 255), 1, 0.1, 12)
             else:
                 self.relicGainPos.append( (Ingame_state.map.id, type[2], type[3]) )
                 Relic.addRandomRelic()
@@ -217,12 +217,12 @@ class Character:
                 self.state = 'run'
                 self.dir = 'RIGHT'
                 if not Ingame_state.chr_collide_check()[0]:
-                    self.dx = 2 * (1 + self.speed / 100)
+                    self.dx = 2
             elif self.leftKeyDown:
                 self.state = 'run'
                 self.dir = 'LEFT'
                 if not Ingame_state.chr_collide_check()[0]:
-                    self.dx = -2 * (1 + self.speed / 100)
+                    self.dx = -2
 
             # Fallen Check
             Landing_Result = Ingame_state.chr_landing_check()
@@ -262,9 +262,9 @@ class Character:
             self.timer += delta_time
             if self.timer > delta_time * 6:
                 if self.dir == 'LEFT' and self.dx < 0:
-                    self.dx += (1 + self.speed / 100)
+                    self.dx += 1
                 elif self.dir == 'RIGHT' and self.dx > 0:
-                    self.dx -= (1 + self.speed / 100)
+                    self.dx -= 1
                 self.timer = 0
             if self.frame >= self.MOTION_FRAME[self.state] * self.MOTION_DELAY[self.state]:
                 self.state = 'idle'
@@ -313,9 +313,9 @@ class Character:
             else:
                 # keep going if now pressing button
                 if self.leftKeyDown:
-                    self.dx = -2 * (1 + self.speed / 100)
+                    self.dx = -2
                 elif self.rightKeyDown:
-                    self.dx = 2 * (1 + self.speed / 100)
+                    self.dx = 2
 
         # 무적시간 감소
         if self.invincible_time > 0:
@@ -337,7 +337,7 @@ class Character:
                 self.dx, self.dy = Collide_Result[3], Collide_Result[4]
 
         # Chr Pos Update
-        self.x += self.dx# * (1 + self.speed / 100)
+        self.x += self.dx
         self.y += self.dy
 
     def update_chr_hitbox(self):
