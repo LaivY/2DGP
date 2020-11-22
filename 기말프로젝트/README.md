@@ -52,7 +52,6 @@
 - **캐릭터 STATE 흐름**
 ![CHR STATE](https://blogfiles.pstatic.net/MjAyMDExMjJfMTUz/MDAxNjA2MDE4Njk4Njc4.UMBW-W3X7N7RFo5D2Xgn8XAgte5rcqwSRwVuQBwwWCwg.0Negqbp44y6t0T3uTE4lLJgt4dA4_CdRbwaEkBIxKy0g.PNG.dnsjdbstlr/chrState.png?type=w2) 
 
-행동이 종료되면 다시 IDLE상태로 돌아옵니다.
 	- RUN
 	좌우 방향키를 눌렀을 때의 상태. 캐릭터가 좌우로 움직입니다.
 	
