@@ -1,4 +1,4 @@
-# Go2DePth
+# ㅡ던ㅡ
 ## 1. 게임 컨셉
 2D 플렛포머 게임으로서 던전을 돌아다니며,
 몬스터들과 싸우고 던전을 탐험하며 유물을 획득해 강해진 캐릭터를 기반으로 보스를 처치하는 게임
@@ -38,6 +38,7 @@
 	- 강해진 캐릭터를 기반으로 보스몬스터까지 클리어
 - **게임 STATE 흐름**
  ![GAME STATE](https://blogfiles.pstatic.net/MjAyMDEwMTJfMjQ4/MDAxNjAyNDcwNDg1NDQz.Zm2Jt4zrzIxMZ2LjbK8JdajdCVns-0JjTxYhg8r7UrAg.D7ZSS7L29tvKk_o5qm9lIViBqvcs-ukxJ0NfrqdjyYkg.PNG.dnsjdbstlr/state.png?type=w2)
+ 
 	- LOGO_STATE
 	3초 후 MAIN_STATE로 넘어갑니다. 특별한 이벤트는 없습니다.
 	
@@ -50,6 +51,7 @@
 	재도전 / 메인으로 버튼에 따라 STATE를 이동합니다.
 - **캐릭터 STATE 흐름**
 ![CHR STATE](https://blogfiles.pstatic.net/MjAyMDExMjJfMTUz/MDAxNjA2MDE4Njk4Njc4.UMBW-W3X7N7RFo5D2Xgn8XAgte5rcqwSRwVuQBwwWCwg.0Negqbp44y6t0T3uTE4lLJgt4dA4_CdRbwaEkBIxKy0g.PNG.dnsjdbstlr/chrState.png?type=w2) 
+
 행동이 종료되면 다시 IDLE상태로 돌아옵니다.
 	- RUN
 	좌우 방향키를 눌렀을 때의 상태. 캐릭터가 좌우로 움직입니다.
