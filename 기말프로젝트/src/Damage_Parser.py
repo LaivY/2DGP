@@ -129,3 +129,4 @@ def chr_hp_recovery(chr, amount):
 
     Relic.updataRelicStack()
     Relic.updateChrStat()
+

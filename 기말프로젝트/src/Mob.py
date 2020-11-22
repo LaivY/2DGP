@@ -248,8 +248,7 @@ class Mob:
         # 피격 박스와 공격 범위가 포개어져있는 경우
         if  _left < left < _right and \
             _left < right < _right and \
-            top > _top and \
-            bot < _bot:
+            (top > _top or bot < _bot):
             HIT = True
 
         if HIT and Ingame_state.chr.state != 'die' and Ingame_state.chr.invincible_time <= 0:

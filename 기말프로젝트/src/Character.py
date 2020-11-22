@@ -39,7 +39,7 @@ class Character:
 
         ### 캐릭터 시스템 관련 변수들 ###
         self.frame, self.timer = 0, 0                                           # 프레임, 타이머
-        self.state, self.subState = 'idle', 'jump'                              # 상태, 서브상태
+        self.state, self.subState = 'idle', 'none'                              # 상태, 서브상태
         self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 400, 400, 0, 0   # 좌우, 좌표와 움직임속도
         self.relicGainPos = []                                                  # 유물 획득 위치 정보
 
