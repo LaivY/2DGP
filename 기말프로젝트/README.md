@@ -37,34 +37,37 @@
 	- 계속해서 아이템을 파밍해가면서 강해지는 캐릭터
 	- 강해진 캐릭터를 기반으로 보스몬스터까지 클리어
 - **게임 STATE 흐름**
+
  ![GAME STATE](https://blogfiles.pstatic.net/MjAyMDEwMTJfMjQ4/MDAxNjAyNDcwNDg1NDQz.Zm2Jt4zrzIxMZ2LjbK8JdajdCVns-0JjTxYhg8r7UrAg.D7ZSS7L29tvKk_o5qm9lIViBqvcs-ukxJ0NfrqdjyYkg.PNG.dnsjdbstlr/state.png?type=w2)
-	- LOGO_STATE
-	3초 후 MAIN_STATE로 넘어갑니다. 특별한 이벤트는 없습니다.
-	
-	- MAIN_STATE
-	마우스 클릭으로 자신이 원하는 버튼을 클릭합니다.
-	처음부터 / 도전기록 / 게임종료 3가지 버튼에 따라 STATE를 이동합니다.
-	
-	- INGAME_STATE
-	인게임 화면이 그려지는 STATE입니다. 캐릭터가 죽었을 경우 
-	재도전 / 메인으로 버튼에 따라 STATE를 이동합니다.
+ 
+> LOGO_STATE : 
+3초 후 MAIN_STATE로 넘어갑니다. 특별한 이벤트는 없습니다.
+
+> MAIN_STATE : 
+마우스 클릭으로 자신이 원하는 버튼을 클릭합니다.
+처음부터 / 도전기록 / 게임종료 3가지 버튼에 따라 STATE를 이동합니다.
+
+> INGAME_STATE : 
+인게임 화면이 그려지는 STATE입니다. 캐릭터가 죽었을 경우 
+재도전 / 메인으로 버튼에 따라 STATE를 이동합니다.
 - **캐릭터 STATE 흐름**
+
 ![CHR STATE](https://blogfiles.pstatic.net/MjAyMDExMjJfMTUz/MDAxNjA2MDE4Njk4Njc4.UMBW-W3X7N7RFo5D2Xgn8XAgte5rcqwSRwVuQBwwWCwg.0Negqbp44y6t0T3uTE4lLJgt4dA4_CdRbwaEkBIxKy0g.PNG.dnsjdbstlr/chrState.png?type=w2) 
-행동이 종료되면 다시 IDLE상태로 돌아옵니다.
-	- RUN
-	좌우 방향키를 눌렀을 때의 상태. 캐릭터가 좌우로 움직입니다.
-	
-	- ATTACK1, 2, 3
-	IDLE상태에서 x키를 눌렀을 때의 상태. 타이밍에 맞게 공격키를 누르거나 꾹 누르고 있을 경우
-	ATTACK1 ~ 3까지 연계됩니다. 중간에 공격키를 누르지 않았을 경우엔 해당 상태가 끝난 뒤 IDLE상태로 돌아갑니다.
 
-	- HIT
-	캐릭터가 피격당했을 때의 상태.
-	IDLE과 RUN상태일 때 피격을 당하면  HIT 상태가 되며 캐릭터가 뒤로 넉백됩니다.
+> RUN : 
+좌우 방향키를 눌렀을 때의 상태. 캐릭터가 좌우로 움직입니다.
 
-	- JUMP
-	서브(2번째) 상태로서 **RUN + JUMP** 와 같은 STATE가 있을 수 있습니다.
-	이는 **점프 중에 움직이는 중** 이라는 의미를 가집니다. 평소에는 'None' 상태입니다.
+> ATTACK1, 2, 3 : 
+IDLE상태에서 x키를 눌렀을 때의 상태. 타이밍에 맞게 공격키를 누르거나 꾹 누르고 있을 경우
+ATTACK1 ~ 3까지 연계됩니다. 중간에 공격키를 누르지 않았을 경우엔 해당 상태가 끝난 뒤 IDLE상태로 돌아갑니다.
+
+> HIT : 
+캐릭터가 피격당했을 때의 상태.
+IDLE과 RUN상태일 때 피격을 당하면  HIT 상태가 되며 캐릭터가 뒤로 넉백됩니다.
+
+> JUMP : 
+서브(2번째) 상태로서 **RUN + JUMP** 와 같은 STATE가 있을 수 있습니다.
+이는 **점프 중에 움직이는 중** 이라는 의미를 가집니다. 평소에는 'None' 상태입니다.
 	
 ## 4. 개발일정
 

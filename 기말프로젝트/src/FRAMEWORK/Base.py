@@ -33,10 +33,7 @@ def run(state):
         GameState[-1].draw()
 
         update_canvas()
-
-        # Frame Limit
         delay(Frame_interval)
-        #Frame_interval *= 1 / delta_time / 60
 
     close_canvas()
 

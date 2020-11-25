@@ -1,13 +1,13 @@
-import Ingame_state
-import Damage_Parser
 from pico2d import *
+from FRAMEWORK import Image
+from INGAME import Ingame_state, Damage_Parser
 from random import randint
 
 debug = False
 
 class Mob:
-    # 몬스터 이미지
-    MOB_IMAGE = {}
+    # Loading_state에서 JSON파일을 읽어서 저장
+    MOB_MOTION_DATA = {}
 
     def __init__(self, mobId, xPos, yPos):
         ### 몬스터 이미지 관련 변수들 ###
@@ -42,34 +42,17 @@ class Mob:
         self.MOTION_ATTACK_RANGE = {}
 
     def load(self):
-        # Mob image load
-        try:
-            if Mob.MOB_IMAGE[self.id] is not None: pass
-        except:
-            Mob.MOB_IMAGE[self.id] = load_image('../res/Mob/' + str(self.id) + '/sheet.png')
+        self.image = Image.load('../res/Mob/' + str(self.id) + '/sheet.png')
+        self.MOTION_YSHEET       = Mob.MOB_MOTION_DATA[str(self.id)]['YSHEET']
+        self.MOTION_DELAY        = Mob.MOB_MOTION_DATA[str(self.id)]['DELAY']
+        self.MOTION_FRAME        = Mob.MOB_MOTION_DATA[str(self.id)]['FRAME']
+        self.MOTION_HITBOX       = Mob.MOB_MOTION_DATA[str(self.id)]['HITBOX']
+        self.MOTION_ATTACK_RANGE = Mob.MOB_MOTION_DATA[str(self.id)]['ATTACK_RANGE']
 
-        # Mob data load
-        self.image = Mob.MOB_IMAGE[self.id]
-        self.loadMotionData()
-
-    def loadMotionData(self):
-        with open('../res/Mob/' + str(self.id) + '/info.json', 'r') as f:
-            data = json.load(f)
-        for i in data:
-            if i['TYPE'] == 'INFO':
-                self.xSize, self.ySize = i['xSize'], i['ySize']
-                self.sxSize, self.sySize = i['sxSize'], i['sySize']
-                self.hp, self.ad, self.df, self.speed = i['hp'], i['ad'], i['df'], i['speed']
-            if i['TYPE'] == 'YSHEET':
-                self.MOTION_YSHEET = dict(i)
-            elif i['TYPE'] == 'MOTION_DELAY':
-                self.MOTION_DELAY = dict(i)
-            elif i['TYPE'] == 'MOTION_FRAME':
-                self.MOTION_FRAME = dict(i)
-            elif i['TYPE'] == 'MOTION_HITBOX':
-                self.MOTION_HITBOX = dict(i)
-            elif i['TYPE'] == 'MOTION_ATTACK_RANGE':
-                self.MOTION_ATTACK_RANGE = dict(i)
+        # 몹 세팅
+        INFO = Mob.MOB_MOTION_DATA[str(self.id)]['INFO']
+        self.xSize, self.ySize, self.sxSize, self.sySize, self.hp, self.ad, self.df, self.speed =\
+            INFO['xSize'], INFO['ySize'], INFO['sxSize'], INFO['sySize'], INFO['hp'], INFO['ad'], INFO['df'], INFO['speed']
 
     def draw(self):
         if debug:
@@ -281,5 +264,5 @@ def check_mob_can_attack_chr(mob, chr):
     elif mob.id == 101: # 가시
         if abs(mob.x - chr.x) < 30 and abs(mob.y - chr.y) < 10: return True
     elif mob.id == 102: # 쓰레기
-        if   mob.dir == 'LEFT' and 0 < mob.x - chr.x < 60 and abs(mob.y - chr.y) < 10:  return True
-        elif mob.dir == 'RIGHT' and 0 < chr.x - mob.x < 60 and abs(mob.y - chr.y) < 10: return True
+        if   mob.dir == 'LEFT' and 0 < mob.x - chr.x < 50 and abs(mob.y - chr.y) < 10:  return True
+        elif mob.dir == 'RIGHT' and 0 < chr.x - mob.x < 50 and abs(mob.y - chr.y) < 10: return True

@@ -1,9 +1,9 @@
-import Framework
-import UI
 from pico2d import *
-from Mob import Mob
-from Map import Map
-from Character import Character
+from FRAMEWORK import Base
+from INGAME.Mob import Mob
+from INGAME.Map import Map
+from INGAME.Character import Character
+import UI
 
 # Create
 mob = []
@@ -12,7 +12,7 @@ chr = Character()
 
 def eventHandler(e):
     if e.type == SDL_QUIT or (e.type, e.key) == (SDL_KEYDOWN, SDLK_ESCAPE):
-        Framework.running = False
+        Base.running = False
 
     # 캐릭터 이벤트처리
     chr.eventHandler(e)
@@ -21,11 +21,11 @@ def eventHandler(e):
     UI.eventHandler(e)
 
 def update():
-    chr.update(Framework.delta_time)
+    chr.update(Base.delta_time)
     for i in mob:
         if chr.state == 'idle':
             i.hitBy = 'none'
-        i.update(Framework.delta_time)
+        i.update(Base.delta_time)
 
 def draw():
     map.draw()

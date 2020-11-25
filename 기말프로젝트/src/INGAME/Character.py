@@ -1,7 +1,7 @@
-import Ingame_state
-import Relic
-import UI
 from pico2d import *
+from FRAMEWORK import Image
+from INGAME import Ingame_state, Relic
+import UI
 
 debug = False
 
@@ -62,8 +62,7 @@ class Character:
         self.MOTION_ATTACK_RANGE = {}
 
     def load(self):
-        self.image = load_image('../res/Chr/chrSet.png')
-        self.loadMotionData()
+        self.image = Image.load("../res/Chr/chrSet.png")
 
     def draw(self):
         if 'jump' in self.subState:
@@ -81,22 +80,6 @@ class Character:
         if debug:
             draw_rectangle(self.attack_range[0], self.attack_range[1], self.attack_range[2], self.attack_range[3])
             draw_rectangle(self.hitBox[0], self.hitBox[1], self.hitBox[2], self.hitBox[3])
-
-    def loadMotionData(self):
-        with open('../res/Chr/info.json', 'r') as f:
-            data = json.load(f)
-        for i in data:
-            if i['TYPE'] == 'YSHEET':
-                self.MOTION_YSHEET = dict(i)
-            elif i['TYPE'] == 'MOTION_DELAY':
-                self.MOTION_DELAY = dict(i)
-                self.MOTION_DELAY_ORIGIN = dict(i)
-            elif i['TYPE'] == 'MOTION_FRAME':
-                self.MOTION_FRAME = dict(i)
-            elif i['TYPE'] == 'MOTION_HITBOX':
-                self.MOTION_HITBOX = dict(i)
-            elif i['TYPE'] == 'MOTION_ATTACK_RANGE':
-                self.MOTION_ATTACK_RANGE = dict(i)
 
     def eventHandler(self, e):
         # 죽은 상태일 경우 키입력 무시
@@ -204,7 +187,7 @@ class Character:
             if (Ingame_state.map.id, type[2], type[3]) in self.relicGainPos:
                 UI.addString([self.x, self.y], '상자가 비어있습니다.', (255, 255, 255), 1, 0.1, 12)
             else:
-                self.relicGainPos.append( (Ingame_state.map.id, type[2], type[3]) )
+                self.relicGainPos.append((Ingame_state.map.id, type[2], type[3]))
                 Relic.addRandomRelic()
                 Relic.updateChrStat()
 
@@ -324,7 +307,7 @@ class Character:
                 self.invincible_time = 0
 
         # Collide Check
-        if self.state in ['run', 'slide', 'hit'] or self.subState in 'jump':
+        if self.state in ['run', 'slide', 'hit'] or 'jump' in self.subState:
             Collide_Result = Ingame_state.chr_collide_check()
             if Collide_Result[0]:
                 if Collide_Result[1] != 0:

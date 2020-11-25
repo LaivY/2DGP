@@ -1,5 +1,5 @@
 import UI
-import Relic
+from INGAME import Relic
 from random import randint
 
 def chr_attack_mob(mob, chr, dmg):

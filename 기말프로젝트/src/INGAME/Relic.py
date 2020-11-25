@@ -1,10 +1,8 @@
-import Ingame_state
-import Damage_Parser
+from INGAME import  Ingame_state, Damage_Parser
 import UI
-import json
 from random import randint
 
-relic_data = {}
+RELIC_INFO = {}
 
 class relic:
     image = None
@@ -22,7 +20,7 @@ def addRandomRelic():
     inven = chr.relic
 
     # 모든 유물을 갖고있을 경우
-    if len(inven) >= 10:
+    if len(inven) >= 25:
         UI.addString([chr.x, chr.y + 5], '더 이상 획득할 유물이 없습니다.', (255, 255, 255), 1, 0.1)
         return
 
@@ -45,9 +43,9 @@ def addRandomRelic():
         if Pass:
             # 유물 데이터 설정
             r = relic(_id)
-            r.name = relic_data[str(_id)]['NAME']
-            r.desc = relic_data[str(_id)]['DESC']
-            r.flavorText = relic_data[str(_id)]['FLAVOR_TEXT']
+            r.name = RELIC_INFO[str(_id)]['NAME']
+            r.desc = RELIC_INFO[str(_id)]['DESC']
+            r.flavorText = RELIC_INFO[str(_id)]['FLAVOR_TEXT']
             
             # 룬 12면체, 붉은 해골
             if r.id == 101 or r.id == 204:
@@ -78,7 +76,7 @@ def addRandomRelic():
                 r.condition = 6
             
             inven.append(r)
-            UI.addString([chr.x, chr.y + 5], str(relic_data[str(_id)]['NAME']) + '을(를) 획득했습니다!', (255, 255, 255), 1, 0.1, 12)
+            UI.addString([chr.x, chr.y + 5], str(RELIC_INFO[str(_id)]['NAME']) + '을(를) 획득했습니다!', (255, 255, 255), 1, 0.1, 12)
             break
 
     # 마트료시카
@@ -188,11 +186,3 @@ def updataRelicStack():
             r.isActive = True
         else:
             r.isActive = False
-
-def loadRelicData():
-    global relic_data
-    with open('../res/Item/relic_info.json', 'r') as f:
-        data = json.load(f)
-    for i in data:
-        id = i['ID']
-        relic_data[str(id)] = dict(i)
