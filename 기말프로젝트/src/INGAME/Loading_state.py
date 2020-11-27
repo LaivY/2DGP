@@ -10,12 +10,12 @@ FILES = [
     "../res/Mob/102/sheet.png",
     "../res/Map/tileSet.png",
     "../res/Item/relic.png",
-    "../res/UI/ad.png",
-    "../res/UI/as.png",
-    "../res/UI/cri.png",
-    "../res/UI/df.png",
-    "../res/UI/CHR_HP_BAR.png",
-    "../res/UI/CHR_INFO_BASE.png"
+    "../res/UI/Ingame/ad.png",
+    "../res/UI/Ingame/as.png",
+    "../res/UI/Ingame/cri.png",
+    "../res/UI/Ingame/df.png",
+    "../res/UI/Ingame/CHR_HP_BAR.png",
+    "../res/UI/Ingame/CHR_INFO_BASE.png"
 ]
 
 JSON_FILES = [
@@ -30,7 +30,7 @@ def enter():
     global frame_interval, index, bgr, end
     UI.Font12 = load_font('../res/UI/모리스9.ttf', 12)
     UI.Font24 = load_font('../res/UI/모리스9.ttf', 24)
-    bgr = load_image('../res/UI/black.png')
+    bgr = load_image('../res/UI/Ingame/black.png')
     end = False
 
     frame_interval = Base.Frame_interval

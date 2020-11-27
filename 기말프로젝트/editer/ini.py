@@ -2,7 +2,7 @@ import math
 
 # This variables should be modified myself
 # Map
-MAPID = 100
+MAPID = 101
 MAP_WIDTH = 800
 MAP_HEIGHT = 600
 

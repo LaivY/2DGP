@@ -5,7 +5,7 @@ from INGAME.Map import Map
 from INGAME.Character import Character
 import UI
 
-# Create
+# 선언
 mob = []
 map = Map()
 chr = Character()

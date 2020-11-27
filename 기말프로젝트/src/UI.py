@@ -9,12 +9,12 @@ STRING_DATA_TO_PRINT = []
 def load():
     global Font12, Font24, relic_image
     relic_image = Image.load('../res/Item/relic.png')
-    CHR_INFO_IMAGE['base'] = Image.load('../res/UI/CHR_INFO_BASE.png')
-    CHR_INFO_IMAGE['hpbar'] = Image.load('../res/UI/CHR_HP_BAR.png')
-    CHR_INFO_IMAGE['ad'] = Image.load('../res/UI/ad.png')
-    CHR_INFO_IMAGE['as'] = Image.load('../res/UI/as.png')
-    CHR_INFO_IMAGE['cri'] = Image.load('../res/UI/cri.png')
-    CHR_INFO_IMAGE['df'] = Image.load('../res/UI/df.png')
+    CHR_INFO_IMAGE['base'] = Image.load('../res/UI/Ingame/CHR_INFO_BASE.png')
+    CHR_INFO_IMAGE['hpbar'] = Image.load('../res/UI/Ingame/CHR_HP_BAR.png')
+    CHR_INFO_IMAGE['ad'] = Image.load('../res/UI/Ingame/ad.png')
+    CHR_INFO_IMAGE['as'] = Image.load('../res/UI/Ingame/as.png')
+    CHR_INFO_IMAGE['cri'] = Image.load('../res/UI/Ingame/cri.png')
+    CHR_INFO_IMAGE['df'] = Image.load('../res/UI/Ingame/df.png')
 
 def draw():
     drawRelic()
