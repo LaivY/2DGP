@@ -8,6 +8,7 @@ FILES = [
     "../res/Mob/100/sheet.png",
     "../res/Mob/101/sheet.png",
     "../res/Mob/102/sheet.png",
+    "../res/Mob/200/sheet.png",
     "../res/Map/tileSet.png",
     "../res/Item/relic.png",
     "../res/UI/Ingame/ad.png",
@@ -24,6 +25,7 @@ JSON_FILES = [
     "../res/Mob/100/info.json",
     "../res/Mob/101/info.json",
     "../res/Mob/102/info.json",
+    "../res/Mob/200/info.json",
 ]
 
 def enter():
@@ -136,7 +138,7 @@ def loadJSONFile(i):
                 del MOTION_ATTACK_RANGE['TYPE']
 
         id = str(JSON_FILES[i]).split('/')[3]
-        Ingame_state.Mob.MOB_MOTION_DATA[id] = {
+        Ingame_state.Monster.MOB_MOTION_DATA[id] = {
             'INFO'        : MOTION_INFO,
             'YSHEET'      : MOTION_YSHEET,
             'DELAY'       : MOTION_DELAY,

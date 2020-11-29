@@ -1,7 +1,7 @@
 from pico2d import *
 from FRAMEWORK import Base
-from INGAME.Mob import Mob
 from INGAME.Map import Map
+from INGAME.Monster import Monster, Boss, Mob
 from INGAME.Character import Character
 import UI
 
@@ -37,25 +37,6 @@ def enter():
     chr.load()
     map.load()
     UI.load()
-    loadMob()
-
-def loadMob():
-    file = open('../res/Map/' + str(map.id) + '.txt', 'r')
-    mobInfo = file.readlines()
-    file.close()
-
-    for i in mobInfo:
-        temp = i.split()
-        if temp[0] == 'm':
-            type = (int(temp[1]), int(temp[2]))
-            pos = (int(temp[3]), int(temp[4]))
-            if type == (0, 0):
-                mob.append(Mob(100, *pos))
-            elif type == (1, 0):
-                mob.append(Mob(101, *pos))
-            elif type == (2, 0):
-                mob.append(Mob(102, *pos))
-    for i in mob: i.load()
 
 def chr_collide_check():
     for tile in map.tileRect:
@@ -120,34 +101,38 @@ def chr_landing_check():
 
 def chr_portal_check():
     for portal in map.portalRect:
-        PASS = False
-        if chr.hitBox[2] < portal[0]: PASS = True
-        if chr.hitBox[3] > portal[1]: PASS = True
-        if chr.hitBox[0] > portal[2]: PASS = True
-        if chr.hitBox[1] < portal[3]: PASS = True
-        if not PASS:
-            # if chr is in destination
+        isCrash = True
+        if chr.hitBox[2] < portal[0]: isCrash = False
+        if chr.hitBox[3] > portal[1]: isCrash = False
+        if chr.hitBox[0] > portal[2]: isCrash = False
+        if chr.hitBox[1] < portal[3]: isCrash = False
+        if isCrash:
+            # 만약 캐릭터가 도착 맵에 있다면
+            # 해당 좌표로만 캐릭터 이동
             if map.id == portal[4]:
                 chr.subState = 'jump2'
                 chr.x, chr.y = portal[5], portal[6]
             else:
-                # 유물 :: 조개화석
                 for r in chr.relic:
+                    # 조개화석
                     if r.id == 108:
                         r.stack = 1
-                        r.isActive = True
+                    # 수리검, 표창
+                    elif r.id == 205 or r.id == 206:
+                        r.stack = 0
 
-                map.id = portal[4]
+                # 리스트 초기화
+                mob.clear()
                 map.tileRect.clear()
                 map.portalRect.clear()
+
+                # 맵 로드
+                map.id = portal[4]
                 map.load()
 
-                mob.clear()
-                loadMob()
-
+                # 캐릭터 세팅
                 chr.subState = 'jump2'
-                chr.x, chr.y = portal[5], portal[6]
-                chr.dx, chr.dy = 0, 0
+                chr.x, chr.y, chr.dx = portal[5], portal[6], 0
             return
 
 def chr_interaction_check():
@@ -161,24 +146,27 @@ def mob_hit_check(hitBox):
     if chr.attack_range == (0, 0, 0, 0):
         return [False]
     
-    # 몬스터의 피격 범위의 한 점이 캐릭터의 공격 범위 안에 있을 경우
-    left = min(chr.attack_range[0], chr.attack_range[2])
-    right = max(chr.attack_range[0], chr.attack_range[2])
-    top = max(chr.attack_range[1], chr.attack_range[3])
-    bottom = min(chr.attack_range[1], chr.attack_range[3])
-    if left < hitBox[0] < right and bottom < hitBox[1] < top: HIT = True
-    if left < hitBox[2] < right and bottom < hitBox[1] < top: HIT = True
-    if left < hitBox[0] < right and bottom < hitBox[3] < top: HIT = True
-    if left < hitBox[2] < right and bottom < hitBox[3] < top: HIT = True
+    cLeft   = min(chr.attack_range[0], chr.attack_range[2])
+    cRight  = max(chr.attack_range[0], chr.attack_range[2])
+    cTop    = max(chr.attack_range[1], chr.attack_range[3])
+    cBot    = min(chr.attack_range[1], chr.attack_range[3])
 
-    # 몬스터의 피격 범위 안에 캐릭터의 공격 범위가 있을 경우
-    mLeft = min(hitBox[0], hitBox[2])
+    # 공격 범위의 한 점이 피격 범위 안에 있을 경우
+    mLeft  = min(hitBox[0], hitBox[2])
     mRight = max(hitBox[0], hitBox[2])
-    mTop = max(hitBox[1], hitBox[3])
-    mBot = min(hitBox[1], hitBox[3])
-    if mLeft < left < mRight and mLeft < right < mRight and \
-        mBot < top < mTop and mBot < bottom < mTop:
+    mTop   = max(hitBox[1], hitBox[3])
+    mBot   = min(hitBox[1], hitBox[3])
+    if (mLeft <= cLeft <= mRight  and mBot <= cTop <= mTop) or\
+       (mLeft <= cLeft <= mRight  and mBot <= cBot <= mTop) or\
+       (mLeft <= cRight <= mRight and mBot <= cTop <= mTop) or\
+       (mLeft <= cRight <= mRight and mBot <= cBot <= mTop):
         HIT = True
+
+    # 피격 범위의 한 점이 공격 범위 안에 있을 경우
+    if cLeft < mLeft < cRight and cBot < mTop < cTop: HIT = True
+    if cLeft < mLeft < cRight and cBot < mBot < cTop: HIT = True
+    if cLeft < mRight < cRight and cBot < mTop < cTop: HIT = True
+    if cLeft < mRight < cRight and cBot < mBot < cTop: HIT = True
 
     if HIT:
         return [True, chr.state, chr.ad]
@@ -186,9 +174,11 @@ def mob_hit_check(hitBox):
 
 def mob_landing_check(hitBox, x, dy):
     for tile in map.tileRect:
-        if (tile[0] < hitBox[0] < tile[2] or tile[0] < hitBox[2] < tile[2] or tile[0] < x < tile[2]) and \
+        if (tile[0] < hitBox[0] < tile[2] or
+            tile[0] < hitBox[2] < tile[2] or
+            tile[0] <= x <= tile[2]) and \
             hitBox[3] + dy * 2 <= tile[1] <= hitBox[3]:
-            return True, tile[1] + abs(hitBox[1] - hitBox[3])
+            return True, tile[1]
     return [False]
 
 def mob_collide_check(mob):

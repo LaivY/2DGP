@@ -95,7 +95,7 @@ def drawChrInfoDesc():
         Font12.draw(infoX, infoY - 12, '입는 피해량이 ' + str(chr.df) + ' 감소합니다.', (255, 255, 255))
         Font12.draw(infoX, infoY - 24, '[기본 0 + 추가 ' + str(chr.df) + ']', (255, 255, 255))
 
-def addString(pos, string, color, time, dy, size):
+def addString(pos, string, color, time, dy, size=12):
     # string : 출력 문자열
     # pos    : 출력 좌표
     # time   : 출력 시간
@@ -107,7 +107,7 @@ def printStringData():
         if i[5] == 12:
             cx, cy = get_text_extent(Font12, i[1])
             Font12.draw(i[0][0] - (cx / 5), i[0][1] + cy, i[1], i[2])
-        elif i[5] == 16:
+        elif i[5] == 24:
             cx, cy = get_text_extent(Font24, i[1])
             Font24.draw(i[0][0] - (cx / 2), i[0][1] + cy, i[1], i[2])
         i[3] -= Base.delta_time

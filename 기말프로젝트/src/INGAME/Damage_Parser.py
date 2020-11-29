@@ -25,14 +25,14 @@ def chr_attack_mob(mob, chr, dmg):
                 r.stack = 0
                 r.isActive = False
         _dmg *= 2
-        UI.addString([mob.x, mob.y], str(max(_dmg - mob.df, 0)), (255, 100, 100), 0.6, 0.1, 16)
+        UI.addString([mob.x, mob.y], str(max(_dmg - mob.df, 0)), (255, 100, 100), 0.6, 0.1, 24)
     # 일반
     else:
         for r in chr.relic:
             # 음양성
             if r.id == 207:
                 r.stack += 5
-        UI.addString([mob.x, mob.y], str(max(_dmg - mob.df, 0)), (255, 255, 255), 0.6, 0.1, 12)
+        UI.addString([mob.x, mob.y], str(max(_dmg - mob.df, 0)), (255, 255, 255), 0.6, 0.1)
 
     mob.dx = 0
     mob.hitBy = chr.state

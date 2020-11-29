@@ -54,9 +54,9 @@ def drawSelection():
 def drawMap():
     for i in ini.DATA:
         if i[0] == 't':
-            tile.clip_draw(16 * i[1][0], 16 * i[1][1], 16, 16, i[2], Canvas_HEIGHT - i[3], 32, 32)
+            tile.clip_draw(16 * i[1][0], 16 * i[1][1], 16, 16, i[2], i[3], 32, 32)
         elif i[0] == 'm':
-            mob.clip_draw(32 * i[1][0], 32 * i[1][1], 32, 32, i[2], Canvas_HEIGHT - i[3])
+            mob.clip_draw(32 * i[1][0], 32 * i[1][1], 32, 32, i[2], i[3])
     draw_rectangle(0, Canvas_HEIGHT - 1, ini.MAP_WIDTH, Canvas_HEIGHT - ini.MAP_HEIGHT)
 
 def addData(x, y):
@@ -86,12 +86,12 @@ def addData(x, y):
                 des = int(input('Destination : '))
                 xPos = int(input('x : '))
                 yPos = int(input('y : '))
-                ini.DATA.append(('t', ini.selection, (x + 16) // 32 * 32, (y + 16) // 32 * 32, des, xPos, yPos))
+                ini.DATA.append(('t', ini.selection, (x + 16) // 32 * 32, ini.MAP_HEIGHT - (y + 16) // 32 * 32, des, xPos, yPos))
             # Normal
             else:
-                ini.DATA.append(('t', ini.selection, (x + 16) // 32 * 32, (y + 16) // 32 * 32))
+                ini.DATA.append(('t', ini.selection, (x + 16) // 32 * 32, ini.MAP_HEIGHT - (y + 16) // 32 * 32))
         elif SELECT_TYPE == 'mob':
-            ini.DATA.append(('m', ini.selection, (x + 16) // 32 * 32, (y + 16) // 32 * 32))
+            ini.DATA.append(('m', ini.selection, (x + 16) // 32 * 32, ini.MAP_HEIGHT - (y + 16) // 32 * 32))
 
 def saveData():
     f = open(str(ini.MAPID) + '.txt', 'w')
