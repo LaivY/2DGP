@@ -1,10 +1,10 @@
 from pico2d import *
-from FRAMEWORK import Image
-from INGAME import Ingame_state, Damage_Parser
+from FRAMEWORK import DataManager
+from INGAME import Ingame_state, Damage_Parser, Projectile
 from random import randint
 import UI
 
-debug = True
+debug = False
 
 class Monster:
     # Loading_state에서 JSON파일을 읽어서 저장
@@ -13,13 +13,13 @@ class Monster:
     def __init__(self, mobId, xPos, yPos):
         ### 몬스터 이미지 관련 변수들 ###
         self.image = None                                       # 이미지
-        self.xSize, self.ySize = 0, 0                           # 화면 그려질 이미지의 크기
-        self.sxSize, self.sySize = 0, 0                         # 이미지 파일 원본의 크기
-        self.id = mobId                                         # 몹 종류
+        self.xSize, self.ySize = 0, 0                           # 화면에 그려질 이미지 크기
+        self.sxSize, self.sySize = 0, 0                         # 한 프레임 당 이미지 크기
+        self.frame = 0                                          # 프레임
+        self.timer = {}                                         # 타이머
+        self.id = mobId                                         # 종류
         self.state = 'idle'                                     # 상태
         self.order = 'patrol'                                   # 명령
-        self.order_timer = 0                                    # 해당명령 수행시간
-        self.frame, self.frame_timer = 0, 0                     # 프레임, 프레임 타이머
 
         ### 몬스터 좌표 관련 변수들 ###
         self.dir = 'LEFT'                                       # 좌우
@@ -43,7 +43,7 @@ class Monster:
         self.MOTION_ATTACK_RANGE = {}
 
     def load(self):
-        self.image = Image.load('../res/Mob/' + str(self.id) + '/sheet.png')
+        self.image = DataManager.load('../res/Mob/' + str(self.id) + '/sheet.png')
         self.MOTION_YSHEET       = Monster.MOB_MOTION_DATA[str(self.id)]['YSHEET']
         self.MOTION_DELAY        = Monster.MOB_MOTION_DATA[str(self.id)]['DELAY']
         self.MOTION_FRAME        = Monster.MOB_MOTION_DATA[str(self.id)]['FRAME']
@@ -59,6 +59,13 @@ class Monster:
         if debug:
             draw_rectangle(self.hitBox[0], self.hitBox[1], self.hitBox[2], self.hitBox[3])
             draw_rectangle(self.attack_range[0], self.attack_range[1], self.attack_range[2], self.attack_range[3])
+            UI.FONT['12'].draw(self.x, self.y + 32, self.order, (255, 255, 255))
+            UI.FONT['12'].draw(self.x, self.y + 20, str(int(self.timer['order'])), (255, 255, 255))
+
+        try:
+            self.drawEffect()
+        except:
+            pass
 
         if self.state == 'none': return
         ySheet = self.MOTION_YSHEET[self.state]
@@ -70,7 +77,57 @@ class Monster:
             self.image.clip_composite_draw(self.frame // self.MOTION_DELAY[self.state] % self.MOTION_FRAME[self.state] * self.sxSize,
                                            self.sySize * ySheet, self.sxSize, self.sySize, 0, 'h', self.x, self.y, self.xSize, self.ySize)
 
-    def update_pos(self):
+    def landingCheck(self):
+        map = Ingame_state.map
+        for tile in map.tileRect:
+            if (tile[0] < self.hitBox[0] < tile[2] or
+                tile[0] < self.hitBox[2] < tile[2] or
+                tile[0] <= self.x <= tile[2]) and \
+                self.hitBox[3] + self.dy * 2 <= tile[1] <= self.hitBox[3]:
+                return True, tile[1] - self.MOTION_HITBOX[self.state][3]
+        return False, None
+
+    def collideCheck(self):
+        map = Ingame_state.map
+        mLeft  = min(self.hitBox[0], self.hitBox[2])
+        mRight = max(self.hitBox[0], self.hitBox[2])
+        mTop   = max(self.hitBox[1], self.hitBox[3])
+        mBot   = min(self.hitBox[1], self.hitBox[3])
+
+        mFront = abs(self.MOTION_HITBOX[self.state][0])
+        mBack  = abs(self.MOTION_HITBOX[self.state][2])
+        mUp    = abs(self.MOTION_HITBOX[self.state][1])
+        mDown  = abs(self.MOTION_HITBOX[self.state][3])
+
+        for tile in map.tileRect:
+            RESULT = False, 0, 0, self.dx, self.dy
+            tLeft, tTop, tRight, tBot = tile
+
+            # 머리
+            if (tLeft < mLeft < tRight or tile[0] < mRight < tile[2]) and \
+                tBot <= mTop + self.dy <= tTop != tBot:
+                RESULT = True, RESULT[1], RESULT[2] + tBot - mUp, RESULT[3], 0
+
+            # 좌측
+            if (tBot < mTop < tTop or tBot < mBot < tTop) and \
+                (mLeft + self.dx < tRight < mLeft or tLeft < mLeft + self.dx < tRight):
+                RESULT = True, RESULT[1] + tRight + mBack, RESULT[2], 0, RESULT[4]
+
+            # 우측
+            if (tBot < mTop < tTop or tBot < mBot < tTop) and \
+                (mRight < tLeft < mRight + self.dx or tLeft < mRight + self.dx < tRight):
+                RESULT = True, RESULT[1] + tLeft - mBack, RESULT[2], 0, RESULT[4]
+
+            # 맵밖으로 나가는 것 체크
+            if mLeft + self.dx < 0:
+                RESULT = True, mBack, RESULT[2], 0, RESULT[4]
+            elif mRight + self.dx > map.size[0]:
+                RESULT = True, map.size[0] - mBack, RESULT[2], 0, RESULT[4]
+
+            if RESULT[0]: return RESULT
+        return False, None, None, None, None
+
+    def updatePos(self, delta_time):
         self.frame += 1
         if self.frame >= self.MOTION_FRAME[self.state] * (self.MOTION_DELAY[self.state]):
             self.frame = 0
@@ -85,31 +142,38 @@ class Monster:
                 return
 
         # Collide Check
-        Collide_Result = Ingame_state.mob_collide_check(self)
-        if Collide_Result[0]:
-            if Collide_Result[1] != 0: self.x = Collide_Result[1]
-            if Collide_Result[2] != 0: self.y = Collide_Result[2]
-            self.dx, self.dy = Collide_Result[3], Collide_Result[4]
+        isCollided, x, y, dx, dy = self.collideCheck()
+        if isCollided:
+            if x: self.x = x
+            if y: self.y = y
+            self.dx, self.dy = dx, dy
 
         # Landing Check
-        result = Ingame_state.mob_landing_check(self.hitBox, self.x, self.dy)
-        if result[0]:
-            if self.state == 'fall': self.state = 'idle'
-            self.y = result[1] - self.MOTION_HITBOX[self.state][3]
-            self.dy = 0
-        else:
-            if self.id == 200:
-                self.state = 'fall'
-            else:
+        isLanding, y = self.landingCheck()
+        if isLanding:
+            if self.state == 'fall':
                 self.state = 'idle'
+            self.y = y
+            self.dy = 0
+            self.timer['fall'] = 0
+        else:
+            dy = 0
+            ti = self.timer['fall']
+            while ti > 0:
+                ti -= 0.1
+                dy -= 0.5
+
+            self.state = 'fall'
             self.order = 'wait'
             self.dx = 0
             self.dy = -2
+            self.dy += dy
+            self.timer['fall'] += delta_time
 
         self.x += self.dx
         self.y += self.dy
 
-    def update_hitbox(self):
+    def updateHitbox(self):
         if self.dir == 'LEFT':
             self.hitBox = (self.x + self.MOTION_HITBOX[self.state][0], self.y + self.MOTION_HITBOX[self.state][1],
                            self.x + self.MOTION_HITBOX[self.state][2], self.y + self.MOTION_HITBOX[self.state][3])
@@ -118,44 +182,88 @@ class Monster:
                            self.x - self.MOTION_HITBOX[self.state][2], self.y + self.MOTION_HITBOX[self.state][3])
 
     def hitCheck(self):
-        hit = Ingame_state.mob_hit_check(self.hitBox)
-        if hit[0] and self.hitBy != hit[1] and self.state != 'die':
-            Damage_Parser.chr_attack_mob(self, Ingame_state.chr, Ingame_state.chr.ad)
+        chr = Ingame_state.chr
+
+        def check():
+            if chr.attack_range == (0, 0, 0, 0): return False
+
+            HIT = False
+            cLeft  = min(chr.attack_range[0], chr.attack_range[2])
+            cRight = max(chr.attack_range[0], chr.attack_range[2])
+            cTop   = max(chr.attack_range[1], chr.attack_range[3])
+            cBot   = min(chr.attack_range[1], chr.attack_range[3])
+
+            mLeft  = min(self.hitBox[0], self.hitBox[2])
+            mRight = max(self.hitBox[0], self.hitBox[2])
+            mTop   = max(self.hitBox[1], self.hitBox[3])
+            mBot   = min(self.hitBox[1], self.hitBox[3])
+
+            # 공격 범위의 한 점이 피격 범위 안에 있을 경우
+            if (mLeft <= cLeft <= mRight and mBot <= cTop <= mTop) or \
+                (mLeft <= cLeft <= mRight and mBot <= cBot <= mTop) or \
+                (mLeft <= cRight <= mRight and mBot <= cTop <= mTop) or \
+                (mLeft <= cRight <= mRight and mBot <= cBot <= mTop):
+                HIT = True
+
+            # 피격 범위의 한 점이 공격 범위 안에 있을 경우
+            if cLeft < mLeft < cRight  and cBot < mTop < cTop: HIT = True
+            if cLeft < mLeft < cRight  and cBot < mBot < cTop: HIT = True
+            if cLeft < mRight < cRight and cBot < mTop < cTop: HIT = True
+            if cLeft < mRight < cRight and cBot < mBot < cTop: HIT = True
+
+            if HIT and self.hitBy != chr.state:
+                return True
+            else:
+                return False
+
+        if check():
+            Damage_Parser.chr_attack_mob(self, chr)
 
     def attackCheck(self):
-        HIT = False
-        if self.attack_range == (0, 0, 0, 0): return
+        chr = Ingame_state.chr
 
-        # 공격범위의 한 점이 캐릭터의 피격박스 안에 있는 경우
-        left =  min(Ingame_state.chr.hitBox[0], Ingame_state.chr.hitBox[2])
-        right = max(Ingame_state.chr.hitBox[0], Ingame_state.chr.hitBox[2])
-        top =   max(Ingame_state.chr.hitBox[1], Ingame_state.chr.hitBox[3])
-        bot =   min(Ingame_state.chr.hitBox[1], Ingame_state.chr.hitBox[3])
-        if left < self.attack_range[0] < right and bot < self.attack_range[1] < top: HIT = True
-        if left < self.attack_range[0] < right and bot < self.attack_range[3] < top: HIT = True
-        if left < self.attack_range[2] < right and bot < self.attack_range[1] < top: HIT = True
-        if left < self.attack_range[2] < right and bot < self.attack_range[3] < top: HIT = True
+        def check():
+            if self.attack_range == (0, 0, 0, 0): return
 
-        # 캐릭터의 피격 박스의 한 점이 공격범위 안에 있는 경우
-        _left = min(self.attack_range[0], self.attack_range[2])
-        _right = max(self.attack_range[0], self.attack_range[2])
-        _top = max(self.attack_range[1], self.attack_range[3])
-        _bot = min(self.attack_range[1], self.attack_range[3])
-        if _left < left < _right  and _bot < top < _top: HIT = True
-        if _left < left < _right  and _bot < bot < _top: HIT = True
-        if _left < right < _right and _bot < top < _top: HIT = True
-        if _left < right < _right and _bot < bot < _top: HIT = True
+            HIT = False
+            cLeft  = min(Ingame_state.chr.hitBox[0], Ingame_state.chr.hitBox[2])
+            cRight = max(Ingame_state.chr.hitBox[0], Ingame_state.chr.hitBox[2])
+            cTop   = max(Ingame_state.chr.hitBox[1], Ingame_state.chr.hitBox[3])
+            cBot   = min(Ingame_state.chr.hitBox[1], Ingame_state.chr.hitBox[3])
 
-        # 피격 박스와 공격 범위가 포개어져있는 경우
-        if  _left < left < _right and \
-            _left < right < _right and \
-            (top > _top or bot < _bot):
-            HIT = True
+            mLeft  = min(self.attack_range[0], self.attack_range[2])
+            mRight = max(self.attack_range[0], self.attack_range[2])
+            mTop   = max(self.attack_range[1], self.attack_range[3])
+            mBot   = min(self.attack_range[1], self.attack_range[3])
 
-        if HIT and Ingame_state.chr.state != 'die' and Ingame_state.chr.invincible_time <= 0:
-            Damage_Parser.mob_attack_chr(self, Ingame_state.chr)
+            # 공격범위의 한 점이 캐릭터의 피격박스 안에 있는 경우
+            if cLeft < mLeft  < cRight and cBot < mTop < cTop: HIT = True
+            if cLeft < mLeft  < cRight and cBot < mBot < cTop: HIT = True
+            if cLeft < mRight < cRight and cBot < mTop < cTop: HIT = True
+            if cLeft < mRight < cRight and cBot < mBot < cTop: HIT = True
+
+            # 캐릭터의 피격 박스의 한 점이 공격범위 안에 있는 경우
+            if mLeft < cLeft < mRight  and mBot < cTop < mTop: HIT = True
+            if mLeft < cLeft < mRight  and mBot < cBot < mTop: HIT = True
+            if mLeft < cRight < mRight and mBot < cTop < mTop: HIT = True
+            if mLeft < cRight < mRight and mBot < cBot < mTop: HIT = True
+
+            # 피격 박스와 공격 범위가 포개어져있는 경우
+            if  mLeft < cLeft < mRight and mLeft < cRight < mRight and \
+                (cBot < mTop < cTop or cBot < mBot < cTop):
+                HIT = True
+
+            return HIT and chr.state != 'die' and chr.invincible_time <= 0
+
+        if check():
+            Damage_Parser.mob_attack_chr(self, chr)
 
 class Mob(Monster):
+    def __init__(self, mobId, xPos, yPos):
+        super().__init__(mobId, xPos, yPos)
+        self.timer['fall']  = 0
+        self.timer['order'] = 0
+
     def canNoticeChr(self, chr):
         if self.state == 'attack': return False
         if self.id == 100:  # 슬라임
@@ -188,7 +296,7 @@ class Mob(Monster):
             elif self.dir == 'RIGHT' and 0 < chr.x - self.x < 50 and abs(self.y - chr.y) < 10:
                 return True
 
-    def update_order(self, delta_time):
+    def updateOrder(self, delta_time):
         if self.state == 'hit': return
 
         # 순찰
@@ -197,12 +305,12 @@ class Mob(Monster):
             if self.canNoticeChr(Ingame_state.chr):
                 self.frame = 0
                 self.order = 'approach'
-                self.order_timer = 0
+                self.timer['order'] = 0
 
             # 2초마다 순찰 방향 바꿈
-            if self.order_timer > 2:
-                self.order_timer = 0
-            if self.order_timer == 0:
+            if self.timer['order'] > 2:
+                self.timer['order'] = 0
+            if self.timer['order'] == 0:
                 r = randint(1, 100)
                 if 0 <= r < 33:
                     self.dir = 'LEFT'
@@ -222,13 +330,13 @@ class Mob(Monster):
             if not self.canNoticeChr(Ingame_state.chr):
                 self.frame = 0
                 self.order = 'wait'
-                self.order_timer = 0
+                self.timer['order'] = 0
 
             # 만약 공격할 수 있는 거리에 있다면 attack 명령
             elif self.canAttackChr(Ingame_state.chr):
                 self.frame = 0
                 self.order = 'attack'
-                self.order_timer = 0
+                self.timer['order'] = 0
 
             elif Ingame_state.chr.x - self.x < 0:
                 self.dir = 'LEFT'
@@ -247,13 +355,13 @@ class Mob(Monster):
         # 대기
         if self.order == 'wait':
             self.dx = 0
-            if self.order_timer > 0.5:
+            if self.timer['order'] > 0.5:
                 self.order = 'patrol'
-                self.order_timer = 2
+                self.timer['order'] = 2
 
-        self.order_timer += delta_time
+        self.timer['order'] += delta_time
 
-    def update_attack_range(self):
+    def updateAttackRange(self):
         self.attack_range = (0, 0, 0, 0)
         attack_start, attack_end = 0, 0
         if self.id == 100:
@@ -276,31 +384,138 @@ class Mob(Monster):
                                          self.x - self.MOTION_ATTACK_RANGE[self.state][2], self.y + self.MOTION_ATTACK_RANGE[self.state][3])
 
     def update(self, delta_time):
-        self.update_order(delta_time)
-        self.update_pos()
-        self.update_hitbox()
-        self.update_attack_range()
+        self.updateOrder(delta_time)
+        self.updatePos(delta_time)
+        self.updateHitbox()
+        self.updateAttackRange()
         self.hitCheck()
         self.attackCheck()
 
 class Boss(Monster):
     def __init__(self, mobId, xPos, yPos):
         super().__init__(mobId, xPos, yPos)
+        self.order = 'Chase'
+        self.timer['fall']  = 0
+        self.timer['order'] = 0
+
+        self.skillCoolTime = {}
+        self.skillCoolTime.update({'RapidFall' : 0})
+
+    def changeOrder(self, order):
+        self.order = order
+        self.timer['order'] = 0
+
+    def updatePosBoss(self, delta_time):
+        chr = Ingame_state.chr
+
+        # 필수
+        self.frame += 1
+        if self.frame >= self.MOTION_FRAME[self.state] * (self.MOTION_DELAY[self.state]):
+            self.frame = 0
+            if self.state == 'attack' or self.state == 'hit':
+                self.frame = 0
+                self.state = 'idle'
+            if self.state == 'die':
+                Ingame_state.mob.remove(self)
+                return
+
+        # 충돌 계산
+        isCollided, x, y, dx, dy = self.collideCheck()
+        isLanding, y = self.landingCheck()
+
+        # 패턴 부분
+        if self.order == 'RapidFall':
+            if isLanding:
+                if self.dir == 'RIGHT':
+                    Projectile.createProjectile('explosion', (self.x - 5, self.y), (250, 250), get_time())
+                else:
+                    Projectile.createProjectile('explosion', (self.x + 5, self.y), (250, 250), get_time())
+                self.changeOrder('RapidFall_After')
+                self.y, self.dy = y, 0
+                return
+
+        elif self.order == 'RapidFall_After':
+            self.state = 'idle'
+            if self.timer['order'] > 2:
+                self.changeOrder('Chase')
+
+        elif self.order == 'Chase' and self.state != 'hit':
+            if self.x < chr.x:
+                self.dir = 'RIGHT'
+                self.state = 'move'
+                self.dx = 1.2
+            else:
+                self.dir = 'LEFT'
+                self.state = 'move'
+                self.dx = -1.2
+
+        if isCollided:
+            if x: self.x = x
+            if y: self.y = y
+            self.dx, self.dy = dx, dy
+        
+        if isLanding:
+            if self.state == 'fall':
+                self.state = 'idle'
+            self.y = y
+            self.dy = 0
+            self.timer['fall'] = 0
+        else:
+            dy = 0
+            ti = self.timer['fall']
+            while ti > 0:
+                ti -= 0.1
+                dy -= 0.5
+            self.state = 'fall'
+            self.dx = 0
+            self.dy = -2 + dy
+            self.timer['fall'] += delta_time
+
+        self.timer['order'] += delta_time
+        self.x += self.dx
+        self.y += self.dy
 
     def setOrder(self):
-        if self.state == 'hit' or self.state == 'fall': return
-        self.state = 'move'
+        if self.state == 'hit' or \
+           self.state == 'fall' or \
+           self.order != 'Chase':
+            return
 
         chr = Ingame_state.chr
-        if self.x < chr.x:
-            self.dir = 'RIGHT'
-            self.dx = 1
+
+        # 내려찍기 패턴
+        if get_time() - self.skillCoolTime.get('RapidFall') > 0:
+            self.skillCoolTime['RapidFall'] = get_time()
+            self.order = 'RapidFall'
+            self.timer['fall'] = 1
+            self.x, self.y = chr.x, chr.y + 250
+            UI.addString([self.x, self.y], '피해보아라!!', (255, 100, 100), 2, 0.1, '24')
+            return
+
         else:
-            self.dir = 'LEFT'
-            self.dx = -1
+            self.order = 'Chase'
+
+    def updatePosWithOrder(self):
+        self.attack_range = (0, 0, 0, 0)
+        if self.order == 'RapidFall':
+            self.attack_range = (self.x - 10, self.y + 75, self.x + 10, self.y - 40)
 
     def update(self, delta_time):
+        self.updatePosBoss(delta_time)
         self.setOrder()
-        self.update_pos()
-        self.update_hitbox()
+        self.updatePosWithOrder()
+        self.updateHitbox()
         self.hitCheck()
+        self.attackCheck()
+
+    def drawEffect(self):
+        for p in Projectile.Projectiles:
+            p.draw()
+
+        if self.order == 'RapidFall':
+            frame = self.frame % 119
+            eff = DataManager.load('../res/Effect/Fire/1_' + str(frame) + '.png')
+            if self.dir == 'RIGHT':
+                eff.draw(self.x - 5, self.y, 200, 200)
+            else:
+                eff.draw(self.x + 15, self.y, 200, 200)

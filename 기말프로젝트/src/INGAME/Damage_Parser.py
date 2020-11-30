@@ -1,9 +1,10 @@
 import UI
 from INGAME import Relic
 from random import randint
+import FRAMEWORK.DataManager
 
-def chr_attack_mob(mob, chr, dmg):
-    _dmg = dmg
+def chr_attack_mob(mob, chr):
+    _dmg = chr.ad
 
     for r in chr.relic:
         # 펜 촉
@@ -60,6 +61,7 @@ def chr_attack_mob(mob, chr, dmg):
             elif r.id == 200 and r.isActive:
                 chr_hp_recovery(chr, 12)
 
+    FRAMEWORK.DataManager.load('../res/Sound/SOTE_SFX_FastAtk_v2.wav').play()
     Relic.updataRelicStack()
     Relic.updateChrStat()
 
@@ -112,6 +114,7 @@ def mob_attack_chr(mob, chr):
         chr.state = 'die'
         chr.dx = 0
 
+    FRAMEWORK.DataManager.load('../res/Sound/SOTE_SFX_FastAtk_v2.wav').play()
     Relic.updataRelicStack()
     Relic.updateChrStat()
 
@@ -127,6 +130,6 @@ def chr_hp_recovery(chr, amount):
     chr.hp = min(chr.hp, chr.maxHP)
     UI.addString([chr.x, chr.y], str(round(_amount)), (50, 255, 50), 0.5, 0.1, 12)
 
+    FRAMEWORK.DataManager.load('../res/Sound/SOTE_SFX_HealShort_1_v2.wav').play()
     Relic.updataRelicStack()
     Relic.updateChrStat()
-

@@ -1,8 +1,7 @@
 from pico2d import *
-from FRAMEWORK import Image
+from FRAMEWORK import DataManager
 from INGAME import Ingame_state, Relic
 import UI
-
 debug = False
 
 # 달리기 입력 무시
@@ -40,7 +39,7 @@ class Character:
         ### 캐릭터 시스템 관련 변수들 ###
         self.frame, self.timer = 0, 0                                           # 프레임, 타이머
         self.state, self.subState = 'idle', 'none'                              # 상태, 서브상태
-        self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 400, 400, 0, 0   # 좌우, 좌표와 움직임속도
+        self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 100, 400, 0, 0   # 좌우, 좌표와 움직임속도
         self.relicGainPos = []                                                  # 유물 획득 위치 정보
 
         ### 캐릭터 피격, 공격 관련 변수들 ###
@@ -62,7 +61,7 @@ class Character:
         self.MOTION_ATTACK_RANGE = {}
 
     def load(self):
-        self.image = Image.load("../res/Chr/chrSet.png")
+        self.image = DataManager.load("../res/Chr/chrSet.png")
 
     def draw(self):
         if 'jump' in self.subState:
@@ -152,7 +151,7 @@ class Character:
 
         # 상호작용
         elif (e.key, e.type) == (SDLK_z, SDL_KEYDOWN) and (self.state == 'idle'):
-            interaction_result = Ingame_state.chr_interaction_check()
+            interaction_result = self.interactionCheck()
             if interaction_result != -1:
                 self.interaction_handler(interaction_result)
 
@@ -183,15 +182,129 @@ class Character:
             self.attackKeyDown = False
 
     def interaction_handler(self, type):
-        if (type[0], type[1]) == (0, 1): # 유물 상자
-            if (Ingame_state.map.id, type[2], type[3]) in self.relicGainPos:
+        objType, pos = (type[0], type[1]), (type[2], type[3])
+
+        # 유물 상자
+        if objType == (0, 1):
+            if (Ingame_state.map.id, *pos) in self.relicGainPos:
                 UI.addString([self.x, self.y], '상자가 비어있습니다.', (255, 255, 255), 1, 0.1, 12)
             else:
-                self.relicGainPos.append((Ingame_state.map.id, type[2], type[3]))
+                self.relicGainPos.append((Ingame_state.map.id, *pos))
                 Relic.addRandomRelic()
                 Relic.updateChrStat()
 
-    def update_chr_pos(self, delta_time):
+    def collideCheck(self):
+        map = Ingame_state.map
+        cLeft  = min(self.hitBox[0], self.hitBox[2])
+        cRight = max(self.hitBox[0], self.hitBox[2])
+        cTop   = max(self.hitBox[1], self.hitBox[3])
+        cBot   = min(self.hitBox[1], self.hitBox[3])
+
+        if self.subState == 'none':
+            MOTION_HITBOX = self.MOTION_HITBOX[self.state]
+        else:
+            MOTION_HITBOX = self.MOTION_HITBOX[self.subState]
+        cFront = abs(MOTION_HITBOX[0])
+        cBack  = abs(MOTION_HITBOX[2])
+        cUp    = abs(MOTION_HITBOX[1])
+        cWidth = abs(MOTION_HITBOX[0]) + abs(MOTION_HITBOX[2])
+
+        for tile in map.tileRect:
+            RESULT = False, 0, 0, self.dx, self.dy
+            tLeft, tTop, tRight, tBot = tile
+
+            # 머리 충돌
+            if (tLeft < cLeft < tRight or tLeft < cRight < tRight) and \
+                tBot <= cTop + self.dy <= tTop != tBot:
+                RESULT = True, RESULT[1], tBot - cUp, RESULT[3], 0
+
+            # 좌측 충돌
+            if (tBot < cTop < tTop or tBot < cBot < tTop) and \
+                (cLeft + self.dx <= tRight <= cLeft or tLeft < cLeft + self.dx < tRight):
+                RESULT = True, tRight + cBack, self.y, 0, RESULT[4]
+
+            # 우측 충돌
+            if (tBot < cTop < tTop or tBot < cBot < tTop) and \
+                (cRight <= tLeft <= cRight + self.dx or tLeft < cRight + self.dx < tRight):
+                RESULT = True, tLeft - cBack, self.y, 0, RESULT[4]
+
+            # 맵 밖으로 못나가게
+            if cLeft + self.dx < 0:
+                RESULT = True, cBack, RESULT[2], 0, RESULT[4]
+            elif cRight + self.dx > map.size[0]:
+                RESULT = True, map.size[0] - cBack, RESULT[2], 0, RESULT[4]
+
+            if RESULT[0]:
+                return RESULT
+
+        return False, None, None, None, None
+
+    def landingCheck(self):
+        map = Ingame_state.map
+        cLeft  = min(self.hitBox[0], self.hitBox[2])
+        cRight = max(self.hitBox[0], self.hitBox[2])
+        cBot   = min(self.hitBox[1], self.hitBox[3])
+
+        for tile in map.tileRect:
+            tLeft, tTop, tRight, tBot = tile
+
+            # 바닥 도착 조건
+            # 1. 히트박스의 좌, 우 중에 하나라도 해당 지형의 폭 사이에 있어야한다.
+            # 2. 히트박스의 하단 + dy <= 지형의 상단 <= 히트박스의 하단이여야한다.
+            if (tLeft < cLeft < tRight or tLeft < cRight < tRight) and \
+                cBot + self.dy <= tTop <= cBot:
+                return True, tTop + abs(self.MOTION_HITBOX[self.state][3])
+        return False, None
+
+    def portalCheck(self):
+        map = Ingame_state.map
+        mob = Ingame_state.mob
+
+        for portal in map.portalRect:
+            isCrash = True
+            if self.hitBox[2] < portal[0]: isCrash = False
+            if self.hitBox[3] > portal[1]: isCrash = False
+            if self.hitBox[0] > portal[2]: isCrash = False
+            if self.hitBox[1] < portal[3]: isCrash = False
+            if isCrash:
+                id, x, y = portal[4], portal[5], portal[6]
+
+                # 캐릭터가 도착맵에 있다면
+                if map.id == id:
+                    self.subState = 'jump2'
+                    self.x, self.y = x, y
+                    return
+
+                # 맵 이동
+                for r in self.relic:
+                    # 조개화석
+                    if r.id == 108:
+                        r.stack = 1
+                    # 수리검, 표창
+                    elif r.id == 205 or r.id == 206:
+                        r.stack = 0
+
+                # 리스트 초기화
+                mob.clear()
+                map.tileRect.clear()
+                map.portalRect.clear()
+
+                # 맵 로드
+                map.id = id
+                map.load()
+
+                # 캐릭터 세팅
+                self.x, self.y, self.dx = x, y, 0
+                return
+
+    def interactionCheck(self):
+        map = Ingame_state.map
+        for obj in map.objectRect:
+            if obj[0] <= self.x <= obj[2] and obj[3] <= self.y - 10 <= obj[1]:
+                return obj[4], obj[5], (obj[0] + obj[2]) / 2, (obj[1] + obj[3]) / 2
+        return -1
+
+    def updatePos(self, delta_time):
         self.frame += 1
 
         # 대기
@@ -199,17 +312,15 @@ class Character:
             if self.rightKeyDown:
                 self.state = 'run'
                 self.dir = 'RIGHT'
-                if not Ingame_state.chr_collide_check()[0]:
-                    self.dx = 2
+                self.dx = 2
             elif self.leftKeyDown:
                 self.state = 'run'
                 self.dir = 'LEFT'
-                if not Ingame_state.chr_collide_check()[0]:
-                    self.dx = -2
+                self.dx = -2
 
             # Fallen Check
-            Landing_Result = Ingame_state.chr_landing_check()
-            if not Landing_Result[0]:
+            isLanding, _ = self.landingCheck()
+            if not isLanding:
                 if self.subState == 'none':
                     self.subState = 'jump'
 
@@ -219,8 +330,8 @@ class Character:
                 self.frame = 0
 
             # Fallen Check
-            Landing_Result = Ingame_state.chr_landing_check()
-            if not Landing_Result[0]:
+            isLanding, _ = self.landingCheck()
+            if not isLanding:
                 self.subState = 'jump'
                 self.frame = 0
 
@@ -233,11 +344,11 @@ class Character:
                 self.frame = 0
 
             # Landing Check
-            Landing_Result = Ingame_state.chr_landing_check()
-            if Landing_Result[0]:
+            isLanding, y = self.landingCheck()
+            if isLanding:
                 self.state = 'air_attack2'
                 self.frame, self.dy = 0, 0
-                self.y = Landing_Result[1]
+                self.y = y
 
         # 슬라이드
         elif self.state == 'slide':
@@ -254,8 +365,8 @@ class Character:
                 self.frame, self.timer, self.dx = 0, 0, 0
 
             # Landing Check
-            Landing_Result = Ingame_state.chr_landing_check()
-            if not Landing_Result[0]:
+            isLanding, _ = self.landingCheck()
+            if not isLanding:
                 self.state = 'idle'
                 self.subState = 'jump'
                 self.frame = 0
@@ -286,13 +397,13 @@ class Character:
                 self.frame = (self.MOTION_FRAME['jump'] - 1) * self.MOTION_DELAY['jump']
 
             # Landing Check
-            Landing_Result = Ingame_state.chr_landing_check()
-            if Landing_Result[0]:
+            isLanding, y = self.landingCheck()
+            if isLanding:
                 self.state = 'idle'
                 self.subState = 'none'
                 self.frame = 0
                 self.dy = 0
-                self.y = Landing_Result[1]
+                self.y = y
             else:
                 # keep going if now pressing button
                 if self.leftKeyDown:
@@ -306,49 +417,39 @@ class Character:
             if self.invincible_time < 0:
                 self.invincible_time = 0
 
-        # Collide Check
-        if self.state in ['run', 'slide', 'hit'] or 'jump' in self.subState:
-            Collide_Result = Ingame_state.chr_collide_check()
-            if Collide_Result[0]:
-                if Collide_Result[1] != 0:
-                    if self.dx > 0:
-                        self.x = Collide_Result[1] + self.MOTION_HITBOX[self.state][0]
-                    else:
-                        self.x = Collide_Result[1] - self.MOTION_HITBOX[self.state][0]
-                if Collide_Result[2] != 0:
-                    self.y = Collide_Result[2]
-                self.dx, self.dy = Collide_Result[3], Collide_Result[4]
+        # 충돌 체크
+        isCollided, x, y, dx, dy = self.collideCheck()
+        if isCollided:
+            if x: self.x = x
+            if y: self.y = y
+            self.dx, self.dy = dx, dy
 
         # Chr Pos Update
         self.x += self.dx
         self.y += self.dy
 
-    def update_chr_hitbox(self):
+    def updateHitbox(self):
         if self.state == 'die': return
+        if self.subState == 'none':
+            MOTION_HITBOX = self.MOTION_HITBOX[self.state]
+        else:
+            MOTION_HITBOX = self.MOTION_HITBOX[self.subState]
 
         if self.dir == 'RIGHT':
-            if 'jump' in self.subState:
-                self.hitBox = (self.x - self.MOTION_HITBOX[self.subState][0], self.y + self.MOTION_HITBOX[self.subState][1],
-                               self.x - self.MOTION_HITBOX[self.subState][2], self.y + self.MOTION_HITBOX[self.subState][3])
-            else:
-                self.hitBox = (self.x - self.MOTION_HITBOX[self.state][0], self.y + self.MOTION_HITBOX[self.state][1],
-                               self.x - self.MOTION_HITBOX[self.state][2], self.y + self.MOTION_HITBOX[self.state][3])
+            self.hitBox = (self.x - MOTION_HITBOX[0], self.y + MOTION_HITBOX[1],
+                           self.x - MOTION_HITBOX[2], self.y + MOTION_HITBOX[3])
         else:
-            if 'jump' in self.subState:
-                self.hitBox = (self.x - self.MOTION_HITBOX[self.subState][0], self.y + self.MOTION_HITBOX[self.subState][1],
-                               self.x - self.MOTION_HITBOX[self.subState][2], self.y + self.MOTION_HITBOX[self.subState][3])
-            else:
-                self.hitBox = (self.x + self.MOTION_HITBOX[self.state][0], self.y + self.MOTION_HITBOX[self.state][1],
-                               self.x + self.MOTION_HITBOX[self.state][2], self.y + self.MOTION_HITBOX[self.state][3])
+            self.hitBox = (self.x + MOTION_HITBOX[0], self.y + MOTION_HITBOX[1],
+                           self.x + MOTION_HITBOX[2], self.y + MOTION_HITBOX[3])
 
-    def update_chr_attack_range(self):
+    def updateAttackRange(self):
         self.attack_range = (0, 0, 0, 0)
 
         if (self.state == 'attack1' and self.MOTION_DELAY[self.state] * 2.5 < self.frame < self.MOTION_DELAY[self.state] * 3) or \
-           (self.state == 'attack2' and self.MOTION_DELAY[self.state] * 3 < self.frame < self.MOTION_DELAY[self.state] * 4) or \
-           (self.state == 'attack3' and self.MOTION_DELAY['attack3'] * 2 < self.frame < self.MOTION_DELAY['attack3'] * 4) or \
+           (self.state == 'attack2' and self.MOTION_DELAY[self.state] * 3   < self.frame < self.MOTION_DELAY[self.state] * 4) or \
+           (self.state == 'attack3' and self.MOTION_DELAY['attack3']  * 2    < self.frame < self.MOTION_DELAY['attack3'] * 4) or \
            (self.state == 'air_attack1') or \
-           (self.state == 'air_attack2') and self.frame < self.MOTION_DELAY[self.state] * 2:
+           (self.state == 'air_attack2' and self.frame < self.MOTION_DELAY[self.state] * 2):
             if self.dir == 'RIGHT':
                 self.attack_range = (self.x + self.MOTION_ATTACK_RANGE[self.state][0], self.y + self.MOTION_ATTACK_RANGE[self.state][1],
                                      self.x + self.MOTION_ATTACK_RANGE[self.state][2], self.y + self.MOTION_ATTACK_RANGE[self.state][3])
@@ -357,14 +458,14 @@ class Character:
                                      self.x - self.MOTION_ATTACK_RANGE[self.state][2], self.y + self.MOTION_ATTACK_RANGE[self.state][3])
 
     def update(self, delta_time):
-        # Pos update
-        self.update_chr_pos(delta_time)
+        # 위치 업데이트
+        self.updatePos(delta_time)
 
-        # Hitbox update
-        self.update_chr_hitbox()
+        # 포탈 체크
+        self.portalCheck()
 
-        # Attack range update
-        self.update_chr_attack_range()
+        # 히트박스 업데이트
+        self.updateHitbox()
 
-        # Portal check
-        Ingame_state.chr_portal_check()
+        # 공격범위 업데이트
+        self.updateAttackRange()

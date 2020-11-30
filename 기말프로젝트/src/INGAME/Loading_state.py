@@ -1,5 +1,5 @@
 from pico2d import *
-from FRAMEWORK import Base, Image
+from FRAMEWORK import Base, DataManager
 from INGAME import Relic, Ingame_state
 import UI
 
@@ -16,8 +16,19 @@ FILES = [
     "../res/UI/Ingame/cri.png",
     "../res/UI/Ingame/df.png",
     "../res/UI/Ingame/CHR_HP_BAR.png",
-    "../res/UI/Ingame/CHR_INFO_BASE.png"
+    "../res/UI/Ingame/CHR_INFO_BASE.png",
+    "../res/Sound/SOTE_SFX_DropRelic_Rocky.wav",
+    "../res/Sound/SOTE_SFX_FastAtk_v2.wav",
+    "../res/Sound/SOTE_SFX_HealShort_1_v2.wav"
 ]
+
+# 불
+for i in range(120):
+    FILES.append('../res/Effect/Fire/1_' + str(i) + '.png')
+
+# 불꽃
+for i in range(33):
+    FILES.append('../res/Effect/Frames/1_' + str(i) + '.png')
 
 JSON_FILES = [
     "../res/Chr/info.json",
@@ -30,8 +41,8 @@ JSON_FILES = [
 
 def enter():
     global frame_interval, index, bgr, end
-    UI.Font12 = load_font('../res/UI/모리스9.ttf', 12)
-    UI.Font24 = load_font('../res/UI/모리스9.ttf', 24)
+    UI.FONT['12'] = load_font('../res/UI/모리스9.ttf', 12)
+    UI.FONT['24'] = load_font('../res/UI/모리스9.ttf', 24)
     bgr = load_image('../res/UI/Ingame/black.png')
     end = False
 
@@ -49,7 +60,7 @@ def update():
     global index, display, end
     if index < len(FILES):
         display = 'Loading...' + str(int(index / (len(FILES) + len(JSON_FILES)) * 100)) + '%'
-        Image.load(FILES[index])
+        DataManager.load(FILES[index])
         index += 1
     elif len(FILES) <= index < len(FILES) + len(JSON_FILES):
         display = 'Loading...' + str(int(index / (len(FILES) + len(JSON_FILES)) * 100)) + '%'
@@ -65,13 +76,13 @@ def draw():
     if end:
         display = '로딩 완료!'
         display2 = '모험을 시작하려면 아무 키나 눌러주세요!'
-        sx, sy = UI.get_text_extent(UI.Font12, display)
-        _sx, _sy = UI.get_text_extent(UI.Font12, display2)
-        UI.Font12.draw(400 - (sx / 5), 300 + (sy / 2) + 6, display, (255, 255, 255))
-        UI.Font12.draw(400 - (_sx / 5), 300 + (_sy / 2) - 6, display2, (255, 255, 255))
+        sx, sy = UI.get_text_extent(UI.FONT['12'], display)
+        _sx, _sy = UI.get_text_extent(UI.FONT['12'], display2)
+        UI.FONT['12'].draw(400 - (sx / 5), 300 + (sy / 2) + 6, display, (255, 255, 255))
+        UI.FONT['12'].draw(400 - (_sx / 5), 300 + (_sy / 2) - 6, display2, (255, 255, 255))
     else:
-        sx, sy = UI.get_text_extent(UI.Font12, display)
-        UI.Font12.draw(400 - (sx / 2), 300 + (sy / 2), display, (255, 255, 255))
+        sx, sy = UI.get_text_extent(UI.FONT['12'], display)
+        UI.FONT['12'].draw(400 - (sx / 2), 300 + (sy / 2), display, (255, 255, 255))
 
 def eventHandler(e):
     if e.type == SDL_QUIT or (e.type, e.key) == (SDL_KEYDOWN, SDLK_ESCAPE):

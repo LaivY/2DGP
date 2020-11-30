@@ -54,25 +54,16 @@ class Map:
                     i.load()
 
             # Add tileRect
-            if type == (0, 10) or type == (0, 7):
-                self.tileRect.append((pos[0] - 16, pos[1] + 16, pos[0] + 16, pos[1]))
-                self.tileRect.append((pos[0]     , pos[1] + 16, pos[0] - 16, pos[1] - 16))
+            if type in [(0, 10), (0, 7), (2, 10), (2, 7), (0, 5), (0, 8), (2, 5), (2, 8)]:
+                self.tileRect.append((pos[0] - 16, pos[1] + 16, pos[0] + 16, pos[1] - 16))
+
             elif type == (1, 10) or type == (1, 7):
                 self.tileRect.append((pos[0] - 16, pos[1] + 16, pos[0] + 16, pos[1]))
-            elif type == (2, 10) or type == (2, 7):
-                self.tileRect.append((pos[0] - 16, pos[1] + 16, pos[0] + 16, pos[1]))
-                self.tileRect.append((pos[0]     , pos[1] + 16, pos[0] + 16, pos[1] - 16))
             elif type == (0, 9) or type == (0, 6):
                 self.tileRect.append((pos[0] - 16, pos[1] + 16, pos[0], pos[1] - 16))
             elif type == (2, 9) or type == (2, 6):
                 self.tileRect.append((pos[0], pos[1] + 16, pos[0] + 16, pos[1] - 16))
-            elif type == (0, 8) or type == (0, 5):
-                self.tileRect.append((pos[0] - 16, pos[1] + 16, pos[0], pos[1] - 16))
-                self.tileRect.append((pos[0] - 16, pos[1], pos[0] + 16, pos[1] - 16))
             elif type == (1, 8) or type == (1, 5):
-                self.tileRect.append((pos[0] - 16, pos[1], pos[0] + 16, pos[1] - 16))
-            elif type == (2, 8) or type == (2, 5):
-                self.tileRect.append((pos[0]     , pos[1] + 16, pos[0] + 16, pos[1] - 16))
                 self.tileRect.append((pos[0] - 16, pos[1], pos[0] + 16, pos[1] - 16))
             elif type == (6, 10) or type == (5, 9) or type == (6, 9) or type == (7, 9):
                 self.tileRect.append((pos[0] - 16, pos[1], pos[0] + 16, pos[1]))
