@@ -1,6 +1,8 @@
 from pico2d import *
 from INGAME import Ingame_state
 from INGAME.Monster import Mob, Boss
+from FRAMEWORK import DataManager
+import UI
 debug = False
 
 class Map:
@@ -20,7 +22,9 @@ class Map:
             Map.TileSet = load_image('../res/Map/tileSet.png')
 
         # Start map
-        if self.id == -1: self.id = 100
+        if self.id == -1:
+            self.id = 100
+        self.enterEvent()
 
         # Map file load
         file = open('../res/Map/' + str(self.id) + '.txt', 'r')
@@ -94,7 +98,13 @@ class Map:
 
             # Add objectRect
             if type == (0, 1):
-                self.objectRect.append((pos[0] - 8, pos[1], pos[0] + 10, pos[1] - 16, type[0], type[1]))
+                self.objectRect.append((type[0], type[1], pos[0] - 8, pos[1], pos[0] + 10, pos[1] - 16))
+            elif type == (1, 0):
+                text = ''
+                for j in range(len(f)):
+                    if j <= 4: continue
+                    text += f[j] + ' '
+                self.objectRect.append((type[0], type[1], pos[0] - 8, pos[1], pos[0] + 10, pos[1] - 16, text))
 
     def draw(self):
         for i in self.tileInfo:
@@ -103,6 +113,9 @@ class Map:
 
             elif temp[0] == 't':
                 Map.TileSet.clip_draw(16 * int(temp[1]), 16 * int(temp[2]), 16, 16, int(temp[3]), int(temp[4]), 32, 32)
+
+        # 튜토리얼 설명
+        self.drawTutorialText()
 
         if debug:
             for i in self.portalRect:
@@ -113,3 +126,42 @@ class Map:
 
             for i in self.objectRect:
                 draw_rectangle(i[0], i[1], i[2], i[3])
+
+    def enterEvent(self):
+        chr = Ingame_state.chr
+        # 맵 입장 시 좌표 기억
+        if chr.onlyOnce.get(str(self.id)) == None:
+            chr.onlyOnce.update( { str(self.id) : (chr.x, chr.y) } )
+
+        # 지하 N층 표시
+        if chr.onlyOnce.get(str(self.id // 100) + 'Floor') == None:
+            chr.onlyOnce.update({str(self.id // 100) + 'Floor': True})
+            UI.addString([400, 300], '지하' + str(self.id // 100) + '층', (255, 100, 100), 3, 0.05, 24)
+
+        # 보스맵 배경음 변경
+        if self.id == 400:
+            Ingame_state.changeBGM('../res/Sound/STS_Boss4_v6.mp3')
+
+    def drawTutorialText(self):
+        if self.id == 100:
+            UI.FONT['12'].draw(80, 212, '← ↑ ↓ → 방향키로 움직일 수 있습니다.', (255, 255, 255))
+            UI.FONT['12'].draw(80, 200, '오른쪽으로 계속 가볼까요?', (255, 255, 255))
+        elif self.id == 101:
+            UI.FONT['12'].draw(30, 252, 'C키로 점프할 수 있습니다.', (255, 255, 255))
+            UI.FONT['12'].draw(30, 240, '앞의 벽 위에 올라가보세요!', (255, 255, 255))
+            UI.FONT['12'].draw(200, 352, '공중에서 C키를 한 번 더 누르면', (255, 255, 255))
+            UI.FONT['12'].draw(200, 340, '2단 점프할 수 있습니다.', (255, 255, 255))
+            UI.FONT['12'].draw(600, 200, '계속해서 오른쪽으로 가보죠!', (255, 255, 255))
+        elif self.id == 102:
+            UI.FONT['12'].draw(30, 200, '저기 상자가 있어요! 확인해보러 갑시다!', (255, 255, 255))
+            UI.FONT['12'].draw(450, 550, 'Z키로 상자를 열 수 있어요.', (255, 255, 255))
+        elif self.id == 103:
+            UI.FONT['12'].draw(20, 212, '저기 몬스터가 있네요. 가서 처치해봅시다.', (255, 255, 255))
+            UI.FONT['12'].draw(20, 200, 'X키로 공격할 수 있어요.', (255, 255, 255))
+            UI.FONT['12'].draw(450, 300, '공중에서 X키를 누르면 낙하 공격을 합니다.', (255, 255, 255))
+            UI.FONT['12'].draw(450, 288, '스페이스바 키로 모션을 캔슬하고 슬라이딩할 수 있습니다.', (255, 255, 255))
+        elif self.id == 104:
+            UI.FONT['12'].draw(80, 282, '길이 위 아래로 나뉘었어요.', (255, 255, 255))
+            UI.FONT['12'].draw(80, 270, '이제부터는 여러분만의 모험을 해보세요!', (255, 255, 255))
+            UI.FONT['12'].draw(400, 230, '만약 캐릭터가 버그가 걸렸다면 R키를 눌러서 위치를 재조정할 수 있습니다.', (255, 255, 255))
+            UI.FONT['12'].draw(400, 218, '하지만 각 방마다 단 한 번만 사용할 수 있습니다.', (255, 255, 255))

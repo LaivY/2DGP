@@ -1,6 +1,6 @@
 from pico2d import *
 from FRAMEWORK import Base, DataManager
-from INGAME import Loading_state
+from INGAME import Loading_state, Ingame_state
 
 MOUSE_POSITION = [0, 0]
 MOUSE_ON_BUTTON = -1
@@ -142,7 +142,14 @@ def eventHandler(e):
             if 295 <= e.y <= 295 + 49:
                 bgm.stop()
                 mouseClick.play()
-                Base.changeState(Loading_state)
+
+                try:
+                    if Loading_state.LOADING_END:
+                        Base.changeState(Ingame_state)
+                    else:
+                        Base.changeState(Loading_state)
+                except:
+                    pass
             elif 366 <= e.y <= 366 + 49:
                 mouseClick.play()
             elif 436 <= e.y <= 436 + 49:

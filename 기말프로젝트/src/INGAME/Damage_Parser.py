@@ -3,8 +3,11 @@ from INGAME import Relic
 from random import randint
 import FRAMEWORK.DataManager
 
-def chr_attack_mob(mob, chr):
-    _dmg = chr.ad
+def chr_attack_mob(mob, chr, dmg=-1):
+    if dmg != -1:
+        _dmg = dmg
+    else:
+        _dmg = chr.ad
 
     for r in chr.relic:
         # 펜 촉
@@ -44,7 +47,7 @@ def chr_attack_mob(mob, chr):
     else:
         mob.dir = 'LEFT'
 
-    if mob.state != 'attack':
+    if not 'attack' in mob.state:
         mob.state = 'hit'
         mob.frame = 0
 
@@ -88,7 +91,7 @@ def mob_attack_chr(mob, chr):
             else:
                 r.stack += 1
 
-    if chr.state == 'idle' or chr.state == 'run':
+    if (chr.state == 'idle' or chr.state == 'run') and chr.subState == 'none':
         chr.state = 'hit'
         chr.frame = 0
 
@@ -112,7 +115,7 @@ def mob_attack_chr(mob, chr):
 
     if chr.hp <= 0:
         chr.state = 'die'
-        chr.dx = 0
+        chr.dx, chr.hp = 0, 0
 
     FRAMEWORK.DataManager.load('../res/Sound/SOTE_SFX_FastAtk_v2.wav').play()
     Relic.updataRelicStack()

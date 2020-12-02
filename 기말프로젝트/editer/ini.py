@@ -2,7 +2,7 @@ import math
 
 # This variables should be modified myself
 # Map
-MAPID = 101
+MAPID = 105
 MAP_WIDTH = 800
 MAP_HEIGHT = 600
 
@@ -13,7 +13,7 @@ path = '../res/Map/'
 selection = None
 
 # Background tile
-BGR = (11, 10)
+BGR = (11, 7)
 
 # Mouse position
 mPos = (0, 0)

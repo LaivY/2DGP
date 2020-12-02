@@ -36,7 +36,7 @@ def drawTileSet():
                            ini.MAP_WIDTH + 16 + 32 * i + 16, Canvas_HEIGHT - 176 * 2 + 16 + 32 * j + 16)
 
 def drawMobSet():
-    for i in range(3):
+    for i in range(4):
         for j in range(1):
             mob.clip_draw(32 * i, 32 * j, 32, 32, ini.MAP_WIDTH + 16 + 32 * i, Canvas_HEIGHT - 176 * 2 - 16)
             draw_rectangle(ini.MAP_WIDTH + 32 * i, Canvas_HEIGHT - 176 * 2, ini.MAP_WIDTH + 32 * i + 32, Canvas_HEIGHT - 176 * 2 - 32)
@@ -70,7 +70,7 @@ def addData(x, y):
                 ini.selection = (i, j)
                 SELECT_TYPE = 'tile'
     # Mob Select
-    for i in range(3):
+    for i in range(4):
         for j in range(1):
             if 32 * i + ini.MAP_WIDTH <= x <= 32 * i + 32 + ini.MAP_WIDTH and \
                 0 <= ini.MAP_HEIGHT - y <= ini.MAP_HEIGHT - 176 * 2:
@@ -82,11 +82,36 @@ def addData(x, y):
     if 0 <= x <= ini.MAP_WIDTH and 0 <= y <= ini.MAP_HEIGHT and ini.selection is not None:
         if SELECT_TYPE == 'tile':
             # Portal
-            if ini.selection in [(11, 0), (10, 0), (9, 0), (10, 1)]:
-                des = int(input('Destination : '))
-                xPos = int(input('x : '))
-                yPos = int(input('y : '))
+            if ini.selection in [(9, 0), (10, 0), (10, 1), (11, 0)]:
+                des = input('Destination : ')
+
+                if ini.selection == (9, 0):
+                    xPos = ini.MAP_WIDTH  - (x + 16) // 32 * 32 - 10
+                    yPos = ini.MAP_HEIGHT - (y + 16) // 32 * 32
+                    print('왼쪽', xPos, yPos)
+
+                elif ini.selection == (10, 0):
+                    xPos = (x + 16) // 32 * 32
+                    yPos = (y + 16) // 32 * 32
+                    print('아래', xPos, yPos)
+
+                elif ini.selection == (10, 1):
+                    xPos = (x + 16) // 32 * 32
+                    yPos = (y + 16) // 32 * 32 + 10
+                    print('위', xPos, yPos)
+
+                elif ini.selection == (11, 0):
+                    xPos = ini.MAP_WIDTH  - (x + 16) // 32 * 32 + 10
+                    yPos = ini.MAP_HEIGHT - (y + 16) // 32 * 32
+                    print('오른쪽', xPos, yPos)
+
                 ini.DATA.append(('t', ini.selection, (x + 16) // 32 * 32, ini.MAP_HEIGHT - (y + 16) // 32 * 32, des, xPos, yPos))
+                
+            # 표지판
+            elif ini.selection == (1, 0):
+                text = input('내용 : ')
+                ini.DATA.append(('t', ini.selection, (x + 16) // 32 * 32, ini.MAP_HEIGHT - (y + 16) // 32 * 32, text))
+            
             # Normal
             else:
                 ini.DATA.append(('t', ini.selection, (x + 16) // 32 * 32, ini.MAP_HEIGHT - (y + 16) // 32 * 32))
@@ -97,15 +122,20 @@ def saveData():
     f = open(str(ini.MAPID) + '.txt', 'w')
     f.write(str(ini.MAP_WIDTH) + ' ' + str(ini.MAP_HEIGHT) + '\n')
     for data in ini.DATA:
-        a = data[0]
-        b = data[1][0]
-        c = data[1][1]
-        d = data[2]
-        e = data[3]
-        if (b, c) in [(11, 0), (10, 0), (9, 0), (10, 1)]:
-            f.write(str(a) + ' ' + str(b) + ' ' + str(c) + ' ' + str(d) + ' ' + str(e) + ' ' + str(data[4]) + ' ' + str(data[5]) + ' ' + str(data[6]) + '\n')
+        Category     = data[0]
+        Type1, Type2 = data[1]
+        xPos, yPos   = data[2], data[3]
+
+        if Category == 't' and (Type1, Type2) in [(11, 0), (10, 0), (9, 0), (10, 1)]:
+            f.write(str(Category) + ' ' + str(Type1) + ' ' + str(Type2) + ' ' + str(xPos) + ' ' + str(yPos) + ' ' + str(data[4]) + ' ' + str(data[5]) + ' ' + str(data[6]) + '\n')
+        elif Category == 't' and (Type1, Type2) == (1, 0):
+            text = ''
+            for i in range(len(data)):
+                if i <= 3: continue
+                text += data[i]
+            f.write(str(Category) + ' ' + str(Type1) + ' ' + str(Type2) + ' ' + str(xPos) + ' ' + str(yPos) + ' ' + text + '\n')
         else:
-            f.write(str(a) + ' ' + str(b) + ' ' + str(c) + ' ' + str(d) + ' ' + str(e) + '\n')
+            f.write(str(Category) + ' ' + str(Type1) + ' ' + str(Type2) + ' ' + str(xPos) + ' ' + str(yPos) + '\n')
     f.close()
     print('저장완료')
 

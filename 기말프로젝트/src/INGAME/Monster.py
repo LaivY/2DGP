@@ -52,8 +52,8 @@ class Monster:
 
         # 몹 세팅
         INFO = Monster.MOB_MOTION_DATA[str(self.id)]['INFO']
-        self.xSize, self.ySize, self.sxSize, self.sySize, self.hp, self.ad, self.df, self.speed =\
-            INFO['xSize'], INFO['ySize'], INFO['sxSize'], INFO['sySize'], INFO['hp'], INFO['ad'], INFO['df'], INFO['speed']
+        self.xSize, self.ySize, self.sxSize, self.sySize, self.maxHp, self.hp, self.ad, self.df, self.speed =\
+            INFO['xSize'], INFO['ySize'], INFO['sxSize'], INFO['sySize'], INFO['hp'], INFO['hp'], INFO['ad'], INFO['df'], INFO['speed']
 
     def draw(self):
         if debug:
@@ -63,7 +63,7 @@ class Monster:
             UI.FONT['12'].draw(self.x, self.y + 20, str(int(self.timer['order'])), (255, 255, 255))
 
         try:
-            self.drawEffect()
+            self.drawHpBar()
         except:
             pass
 
@@ -185,6 +185,7 @@ class Monster:
         chr = Ingame_state.chr
 
         def check():
+            if self.state == 'die': return False
             if chr.attack_range == (0, 0, 0, 0): return False
 
             HIT = False
@@ -226,10 +227,10 @@ class Monster:
             if self.attack_range == (0, 0, 0, 0): return
 
             HIT = False
-            cLeft  = min(Ingame_state.chr.hitBox[0], Ingame_state.chr.hitBox[2])
-            cRight = max(Ingame_state.chr.hitBox[0], Ingame_state.chr.hitBox[2])
-            cTop   = max(Ingame_state.chr.hitBox[1], Ingame_state.chr.hitBox[3])
-            cBot   = min(Ingame_state.chr.hitBox[1], Ingame_state.chr.hitBox[3])
+            cLeft  = min(chr.hitBox[0], chr.hitBox[2])
+            cRight = max(chr.hitBox[0], chr.hitBox[2])
+            cTop   = max(chr.hitBox[1], chr.hitBox[3])
+            cBot   = min(chr.hitBox[1], chr.hitBox[3])
 
             mLeft  = min(self.attack_range[0], self.attack_range[2])
             mRight = max(self.attack_range[0], self.attack_range[2])
@@ -384,9 +385,9 @@ class Mob(Monster):
                                          self.x - self.MOTION_ATTACK_RANGE[self.state][2], self.y + self.MOTION_ATTACK_RANGE[self.state][3])
 
     def update(self, delta_time):
+        self.updateHitbox()
         self.updateOrder(delta_time)
         self.updatePos(delta_time)
-        self.updateHitbox()
         self.updateAttackRange()
         self.hitCheck()
         self.attackCheck()
@@ -397,49 +398,267 @@ class Boss(Monster):
         self.order = 'Chase'
         self.timer['fall']  = 0
         self.timer['order'] = 0
+        self.timer['skill'] = 0
+        self.startTime = get_time()
+        self.onlyOnce = {}
 
         self.skillCoolTime = {}
-        self.skillCoolTime.update({'RapidFall' : 0})
+        self.skillCoolTime.update({
+                                    'RapidFall' : 0,
+                                    'WaveExplosion' : 0,
+                                    'WaveExplosion2' : 0,
+                                    'Thunder': 0,
+                                    'Meteor': 0,
+                                    'Fireball': 0,
+                                    'Attack' : 0
+                                   })
+        self.skillCount = 0
 
     def changeOrder(self, order):
-        self.order = order
+        self.frame = 0
         self.timer['order'] = 0
+        self.timer['skill'] = 0
+        self.skillCount = 0
+        self.order = order
+
+    def setOrder(self):
+        if self.state == 'hit' or \
+           self.state == 'fall' or \
+           self.order != 'Chase':
+            return
+
+        chr = Ingame_state.chr
+
+        # 보스방 입장 후 지난 시간
+        time = get_time() - self.startTime
+
+        # 랜덤으로 하나를 골라서 해당 패턴을 사용할 수 있는지 체크
+        pattern = randint(0, 5)
+        #pattern = 5
+
+        # 내려찍기 패턴
+        if pattern == 0:
+            if get_time() - self.skillCoolTime.get('RapidFall') > 10:
+                self.skillCoolTime['RapidFall'] = get_time()
+                self.order = 'RapidFall'
+                self.timer['fall'] = 0.5
+                self.x, self.y = chr.x, chr.y + 250
+                UI.addString([self.x, self.y], '도망칠 수 없다!!', (255, 100, 100), 2, 0.1, '24')
+                return
+
+        # 연쇄 폭발 패턴
+        elif pattern == 1:
+            if get_time() - self.skillCoolTime.get('WaveExplosion') > 15:
+                self.skillCoolTime['WaveExplosion'] = get_time()
+                self.order = 'WaveExplosion'
+                UI.addString([self.x, self.y], '퍼져나가라!!', (255, 100, 100), 2, 0.1, '24')
+                return
+
+        # 연쇄 폭발 패턴2
+        elif pattern == 2:
+            if get_time() - self.skillCoolTime.get('WaveExplosion2') > 15:
+                self.skillCoolTime['WaveExplosion2'] = get_time()
+                self.order = 'WaveExplosion2'
+                UI.addString([self.x, self.y], '돌아와라!!', (255, 100, 100), 2, 0.1, '24')
+                return
+
+        # 번개 패턴
+        elif pattern == 3:
+            if get_time() - self.skillCoolTime.get('Thunder') > 20:
+                self.skillCoolTime['Thunder'] = get_time()
+                self.order = 'Thunder'
+                UI.addString([self.x, self.y], '내리쳐라!!', (255, 100, 100), 2, 0.1, '24')
+                return
+
+        # 메테오 패턴
+        elif pattern == 4:
+            if get_time() - self.skillCoolTime.get('Meteor') > 60:
+                self.skillCoolTime['Meteor'] = get_time()
+                self.order = 'Meteor'
+                UI.addString([self.x, self.y], '모조리 쓸어버려주지!!', (255, 100, 100), 2, 0.1, '24')
+                return
+        
+        # 파이어볼 패턴
+        elif pattern == 5:
+            if get_time() - self.skillCoolTime.get('Fireball') > 15:
+                self.skillCoolTime['Fireball'] = get_time()
+                self.order = 'Fireball'
+
+                if self.x < chr.x:
+                    self.dir = 'RIGHT'
+                else:
+                    self.dir = 'LEFT'
+                UI.addString([self.x, self.y], '받아라!!', (255, 100, 100), 2, 0.1, '24')
+                return
+
+        self.order = 'Chase'
 
     def updatePosBoss(self, delta_time):
         chr = Ingame_state.chr
 
         # 필수
         self.frame += 1
-        if self.frame >= self.MOTION_FRAME[self.state] * (self.MOTION_DELAY[self.state]):
+        if self.frame >= self.MOTION_FRAME[self.state] * self.MOTION_DELAY[self.state]:
             self.frame = 0
-            if self.state == 'attack' or self.state == 'hit':
+            if self.state == 'hit' or 'attack' in self.state:
                 self.frame = 0
                 self.state = 'idle'
-            if self.state == 'die':
-                Ingame_state.mob.remove(self)
-                return
+                self.order = 'Chase'
+
+            elif self.state == 'die':
+                self.frame = (self.MOTION_FRAME[self.state] - 1) * self.MOTION_DELAY[self.state]
+                chr.onlyOnce.update( {'clear' : True} )
 
         # 충돌 계산
         isCollided, x, y, dx, dy = self.collideCheck()
         isLanding, y = self.landingCheck()
 
-        # 패턴 부분
+        ### 패턴 구현 부분 ###
+        
+        # 내려찍기
         if self.order == 'RapidFall':
             if isLanding:
                 if self.dir == 'RIGHT':
-                    Projectile.createProjectile('explosion', (self.x - 5, self.y), (250, 250), get_time())
+                    Projectile.createProjectile('explosion', (self.x - 5, self.y), 3, 5, get_time())
                 else:
-                    Projectile.createProjectile('explosion', (self.x + 5, self.y), (250, 250), get_time())
+                    Projectile.createProjectile('explosion', (self.x + 5, self.y), 3, 5, get_time())
                 self.changeOrder('RapidFall_After')
                 self.y, self.dy = y, 0
                 return
 
         elif self.order == 'RapidFall_After':
-            self.state = 'idle'
-            if self.timer['order'] > 2:
+            if self.state != 'hit':
+                self.state = 'idle'
+            if self.timer['order'] > 5:
                 self.changeOrder('Chase')
 
+        # 연쇄 폭발
+        elif self.order == 'WaveExplosion':
+            self.dx = 0
+            self.state = 'idle'
+
+            if self.timer['skill'] > 1:
+                self.timer['skill'] = 0.9
+                self.skillCount += 1
+                Projectile.createProjectile('explosion', (self.x + self.skillCount * 50, self.y), 2, 3, get_time())
+                Projectile.createProjectile('explosion', (self.x - self.skillCount * 50, self.y), 2, 3, get_time())
+
+            if self.skillCount >= 20:
+                self.changeOrder('WaveExplosion_After')
+
+            self.timer['skill'] += delta_time
+
+        elif self.order == 'WaveExplosion_After':
+            if self.state != 'hit':
+                self.state = 'idle'
+            if self.timer['order'] > 5:
+                self.changeOrder('Chase')
+
+        # 연쇄 폭발2
+        elif self.order == 'WaveExplosion2':
+            self.dx = 0
+            self.state = 'idle'
+
+            if self.timer['skill'] > 0.1:
+                self.timer['skill'] = 0
+                self.skillCount += 1
+                Projectile.createProjectile('explosion', (self.x + (20 - self.skillCount) * 50, self.y), 2, 3, get_time())
+                Projectile.createProjectile('explosion', (self.x - (20 - self.skillCount) * 50, self.y), 2, 3, get_time())
+
+            if self.skillCount >= 20:
+                self.changeOrder('WaveExplosion2_After')
+
+            self.timer['skill'] += delta_time
+
+        elif self.order == 'WaveExplosion2_After':
+            if self.state != 'hit':
+                self.state = 'idle'
+            if self.timer['order'] > 5:
+                self.changeOrder('Chase')
+
+        # 번개
+        elif self.order == 'Thunder':
+            self.dx = 0
+            self.state = 'idle'
+
+            if self.timer['skill'] > 1:
+                self.timer['skill'] = 0.5
+                self.skillCount += 1
+                Projectile.createProjectile('thunder', (chr.x, self.y + 128), 2, 5, get_time())
+
+            if self.skillCount >= 7:
+                self.changeOrder('Thunder_After')
+
+            self.timer['skill'] += delta_time
+
+        elif self.order == 'Thunder_After':
+            if self.state != 'hit':
+                self.state = 'idle'
+            if self.timer['order'] > 5:
+                self.changeOrder('Chase')
+
+        # 메테오
+        elif self.order == 'Meteor':
+            self.dx = 0
+            self.state = 'attack2'
+            if self.frame >= 7 * self.MOTION_DELAY[self.state]:
+                self.frame = 7 * self.MOTION_DELAY[self.state]
+
+            if self.timer['skill'] > 1:
+                self.timer['skill'] = 0.9
+                self.skillCount += 1
+
+                meteorXPos = randint(0, 800)
+                Projectile.createProjectile('meteor', (meteorXPos, 620), 2, 5, get_time(), -5)
+
+            if self.timer['order'] >= 10:
+                self.changeOrder('Meteor_After')
+                UI.addString([self.x, self.y], '아직도 살아있단 말이냐', (255, 255, 255), 3, 0.1)
+
+            self.timer['skill'] += delta_time
+
+        elif self.order == 'Meteor_After':
+            if self.state != 'hit':
+                self.state = 'idle'
+
+            if self.timer['order'] > 10:
+                self.changeOrder('Chase')
+
+        # 파이어볼
+        elif self.order == 'Fireball':
+            self.dx = 0
+            self.state = 'idle'
+
+            if self.timer['skill'] > 1:
+                self.timer['skill'] = 0.9
+                self.skillCount += 1
+
+                if self.x < chr.x:
+                    Projectile.createProjectile('fireball', (self.x + 50, self.y), 5, 5, get_time(), 5)
+                else:
+                    Projectile.createProjectile('fireball', (self.x - 50, self.y), 5, 5, get_time(), -5)
+
+            if self.skillCount >= 1:
+                self.changeOrder('Fireball_After')
+
+            self.timer['skill'] += delta_time
+
+        elif self.order == 'Fireball_After':
+            if self.state != 'hit':
+                self.state = 'idle'
+
+            if self.timer['order'] > 1:
+                self.changeOrder('Chase')
+
+        # 추적
         elif self.order == 'Chase' and self.state != 'hit':
+            if abs(chr.x - self.x) < 100 and abs(chr.y - self.y) < 40 and \
+                get_time() - self.skillCoolTime.get('Attack') > 5:
+                self.skillCoolTime['Attack'] = get_time()
+                self.changeOrder('Attack' + str(randint(1, 2)))
+                self.dx = 0
+                return
+
             if self.x < chr.x:
                 self.dir = 'RIGHT'
                 self.state = 'move'
@@ -448,6 +667,11 @@ class Boss(Monster):
                 self.dir = 'LEFT'
                 self.state = 'move'
                 self.dx = -1.2
+
+        elif 'Attack' in self.order:
+            self.state = self.order.lower()
+
+        ### 패턴 구현 끝 ###
 
         if isCollided:
             if x: self.x = x
@@ -475,47 +699,35 @@ class Boss(Monster):
         self.x += self.dx
         self.y += self.dy
 
-    def setOrder(self):
-        if self.state == 'hit' or \
-           self.state == 'fall' or \
-           self.order != 'Chase':
-            return
-
-        chr = Ingame_state.chr
-
-        # 내려찍기 패턴
-        if get_time() - self.skillCoolTime.get('RapidFall') > 0:
-            self.skillCoolTime['RapidFall'] = get_time()
-            self.order = 'RapidFall'
-            self.timer['fall'] = 1
-            self.x, self.y = chr.x, chr.y + 250
-            UI.addString([self.x, self.y], '피해보아라!!', (255, 100, 100), 2, 0.1, '24')
-            return
-
-        else:
-            self.order = 'Chase'
-
-    def updatePosWithOrder(self):
+    def updateAttackRangeWithOrder(self):
         self.attack_range = (0, 0, 0, 0)
         if self.order == 'RapidFall':
-            self.attack_range = (self.x - 10, self.y + 75, self.x + 10, self.y - 40)
+            self.attack_range = (self.x - 10, self.y + 20, self.x + 10, self.y - 40)
+
+        elif 'attack' in self.state:
+            if self.MOTION_DELAY[self.state] * 4 <= self.frame <= self.MOTION_DELAY[self.state] * 5:
+                if self.dir == 'RIGHT':
+                    self.attack_range = (
+                    self.x + self.MOTION_ATTACK_RANGE[self.state][0], self.y + self.MOTION_ATTACK_RANGE[self.state][1],
+                    self.x + self.MOTION_ATTACK_RANGE[self.state][2], self.y + self.MOTION_ATTACK_RANGE[self.state][3])
+                else:
+                    self.attack_range = (
+                    self.x - self.MOTION_ATTACK_RANGE[self.state][0], self.y + self.MOTION_ATTACK_RANGE[self.state][1],
+                    self.x - self.MOTION_ATTACK_RANGE[self.state][2], self.y + self.MOTION_ATTACK_RANGE[self.state][3])
 
     def update(self, delta_time):
         self.updatePosBoss(delta_time)
         self.setOrder()
-        self.updatePosWithOrder()
+        self.updateAttackRangeWithOrder()
         self.updateHitbox()
         self.hitCheck()
         self.attackCheck()
 
-    def drawEffect(self):
-        for p in Projectile.Projectiles:
-            p.draw()
+        # if get_time() - self.startTime > 10 and \
+        #     self.onlyOnce.get('10') != True:
+        #     self.onlyOnce.update({'10' : True})
+        #     print('10초 경과')
 
-        if self.order == 'RapidFall':
-            frame = self.frame % 119
-            eff = DataManager.load('../res/Effect/Fire/1_' + str(frame) + '.png')
-            if self.dir == 'RIGHT':
-                eff.draw(self.x - 5, self.y, 200, 200)
-            else:
-                eff.draw(self.x + 15, self.y, 200, 200)
+    def drawHpBar(self):
+        image = DataManager.load('../res/UI/Ingame/CHR_HP_BAR.png')
+        image.clip_draw_to_origin(0, 0, image.w, image.h, 10, 544, (self.hp / self.maxHp) * (get_canvas_width() - 20), image.h)

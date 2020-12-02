@@ -43,8 +43,9 @@ def quit():
 
 def changeState(new_state):
     global GameState
-    if(len(GameState) > 0):
-        GameState.pop().exit
+    if len(GameState) > 0:
+        poped = GameState.pop()
+        poped.exit()
     GameState.append(new_state)
     new_state.enter()
 

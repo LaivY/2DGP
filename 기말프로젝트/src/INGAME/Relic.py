@@ -1,4 +1,5 @@
 from INGAME import  Ingame_state, Damage_Parser
+from FRAMEWORK import DataManager
 import UI
 from random import randint
 
@@ -17,6 +18,10 @@ class relic:
 
 def addRandomRelic():
     chr = Ingame_state.chr
+    if chr.onlyOnce.get('first_relic') == None:
+        chr.onlyOnce.update( {'first_relic' : True} )
+        UI.addString([380, 300], '왼쪽 위 유물 아이콘에 마우스를 갖다대면 유물의 효과를 볼 수 있습니다.', (255, 255, 255), 5, 0.01, 24)
+
     inven = chr.relic
 
     # 모든 유물을 갖고있을 경우
@@ -77,6 +82,7 @@ def addRandomRelic():
             
             inven.append(r)
             UI.addString([chr.x, chr.y + 5], str(RELIC_INFO[str(_id)]['NAME']) + '을(를) 획득했습니다!', (255, 255, 255), 1, 0.1, 12)
+            DataManager.load('../res/Sound/SOTE_SFX_DropRelic_Rocky.wav').play()
             break
 
     # 마트료시카

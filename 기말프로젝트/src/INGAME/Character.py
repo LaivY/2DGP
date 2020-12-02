@@ -1,6 +1,7 @@
 from pico2d import *
-from FRAMEWORK import DataManager
+from FRAMEWORK import Base, DataManager
 from INGAME import Ingame_state, Relic
+import Main_state
 import UI
 debug = False
 
@@ -39,8 +40,9 @@ class Character:
         ### 캐릭터 시스템 관련 변수들 ###
         self.frame, self.timer = 0, 0                                           # 프레임, 타이머
         self.state, self.subState = 'idle', 'none'                              # 상태, 서브상태
-        self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 100, 400, 0, 0   # 좌우, 좌표와 움직임속도
+        self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 175, 600, 0, 0   # 좌우, 좌표와 움직임속도
         self.relicGainPos = []                                                  # 유물 획득 위치 정보
+        self.onlyOnce = {}
 
         ### 캐릭터 피격, 공격 관련 변수들 ###
         self.hitBox = (0, 0, 0, 0)                                              # 히트박스
@@ -63,6 +65,30 @@ class Character:
     def load(self):
         self.image = DataManager.load("../res/Chr/chrSet.png")
 
+    def ini(self):
+        ### 캐릭터 키보드 관련 변수들 ###
+        self.image = None
+        self.leftKeyDown = False
+        self.rightKeyDown = False
+        self.attackKeyDown = False
+
+        ### 캐릭터 시스템 관련 변수들 ###
+        self.frame, self.timer = 0, 0                                           # 프레임, 타이머
+        self.state, self.subState = 'idle', 'none'                              # 상태, 서브상태
+        self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 100, 400, 0, 0   # 좌우, 좌표와 움직임속도
+        self.relicGainPos = []                                                  # 유물 획득 위치 정보
+        self.onlyOnce = {}
+
+        ### 캐릭터 피격, 공격 관련 변수들 ###
+        self.hitBox = (0, 0, 0, 0)                                              # 히트박스
+        self.attack_range = (0, 0, 0, 0)                                        # 공격범위
+        self.invincible_time = 0                                                # 남은 무적 시간
+
+        ### 캐릭터 스탯 관련 변수들 ###
+        self.maxHP, self.hp = 50, 50                                            # 최대HP, 현재HP
+        self.ad, self.AS, self.cri, self.df  = 5, 0, 5, 0                       # 공격력, 공격속도, 치명타, 방어력
+        self.relic = []                                                         # 유물
+
     def draw(self):
         if 'jump' in self.subState:
             state = 'jump'
@@ -76,13 +102,32 @@ class Character:
         elif self.dir == 'LEFT':
             self.image.clip_composite_draw(self.frame // self.MOTION_DELAY[state] % self.MOTION_FRAME[state] * 50, ySheet * 37, 50, 37, 0, 'h', self.x, self.y, 50, 37)
 
+        # 사망했을 시
+        if self.state == 'die':
+            DataManager.load('../res/UI/Ingame/die.png').draw(get_canvas_width() / 2, get_canvas_height() / 2)
+            if self.onlyOnce.get('die') is None:
+                self.onlyOnce.update( {'die' : True} )
+                Ingame_state.BGM.stop()
+                DataManager.load('../res/Sound/STS_DeathStinger_4_v3_MUSIC.wav').play()
+
+        # 클리어했을 시
+        if self.onlyOnce.get('clear'):
+            DataManager.load('../res/UI/Ingame/clear.png').draw(get_canvas_width() / 2, get_canvas_height() / 2)
+
+            if self.onlyOnce.get('play_clear_sound') is None:
+                self.onlyOnce.update( {'play_clear_sound' : True} )
+                Ingame_state.BGM.stop()
+                DataManager.load('../res/Sound/STS_BossVictoryStinger_1_v3_SFX.wav').play()
+                DataManager.load('../res/Sound/STS_BossVictoryStinger_4_v3_MUSIC.wav').play()
+
         if debug:
             draw_rectangle(self.attack_range[0], self.attack_range[1], self.attack_range[2], self.attack_range[3])
             draw_rectangle(self.hitBox[0], self.hitBox[1], self.hitBox[2], self.hitBox[3])
 
     def eventHandler(self, e):
-        # 죽은 상태일 경우 키입력 무시
-        if self.hp <= 0:
+        # 죽은 상태 또는 승리했을 시 메인 스테이트로 이동
+        if (self.state == 'die' or self.onlyOnce.get('clear')) and e.type == SDL_KEYDOWN:
+            Base.changeState(Main_state)
             return
 
         # 점프
@@ -181,17 +226,35 @@ class Character:
         if (e.key, e.type) == (SDLK_x, SDL_KEYUP):
             self.attackKeyDown = False
 
-    def interaction_handler(self, type):
-        objType, pos = (type[0], type[1]), (type[2], type[3])
+        # 위치 재설정
+        if (e.key, e.type) == (SDLK_r, SDL_KEYDOWN) and self.onlyOnce.get(str(Ingame_state.map.id) + '_reset') == None:
+            map = Ingame_state.map
+            self.onlyOnce.update( { str(map.id) + '_reset' : True } )
+            self.x, self.y = self.onlyOnce.get(str(map.id))
+            UI.addString([400, 312], '위치를 재설정했습니다.', (255, 255, 255), 5, 0.01)
+            UI.addString([400, 300], '이 방에서 다시 위치를 재설정 할 수 없습니다.', (255, 255, 255), 5, 0.01)
 
+        # 디버그
+        if (e.key, e.type) == (SDLK_a, SDL_KEYDOWN):
+            print(Ingame_state.map.id)
+
+    def interaction_handler(self, obj):
+        objType = (obj[0], obj[1])
         # 유물 상자
         if objType == (0, 1):
+            pos = (obj[2] + obj[4]) / 2, (obj[3] + obj[5]) / 2
             if (Ingame_state.map.id, *pos) in self.relicGainPos:
-                UI.addString([self.x, self.y], '상자가 비어있습니다.', (255, 255, 255), 1, 0.1, 12)
+                UI.addString([self.x, self.y], '상자가 비어있어.', (255, 255, 255), 1, 0.1)
+            elif len(Ingame_state.mob) != 0:
+                UI.addString([self.x, self.y], '몬스터를 모두 처치해야해.', (255, 255, 255), 1, 0.1)
             else:
                 self.relicGainPos.append((Ingame_state.map.id, *pos))
                 Relic.addRandomRelic()
                 Relic.updateChrStat()
+                
+        # 표지판
+        elif objType == (1, 0):
+            UI.addString([self.x, self.y], obj[6], (255, 255, 255), 2, 0.05)
 
     def collideCheck(self):
         map = Ingame_state.map
@@ -260,12 +323,24 @@ class Character:
         map = Ingame_state.map
         mob = Ingame_state.mob
 
+        left  = min(self.hitBox[0], self.hitBox[2])
+        right = max(self.hitBox[0], self.hitBox[2])
+        top   = max(self.hitBox[1], self.hitBox[3])
+        bot   = min(self.hitBox[1], self.hitBox[3])
+
         for portal in map.portalRect:
-            isCrash = True
-            if self.hitBox[2] < portal[0]: isCrash = False
-            if self.hitBox[3] > portal[1]: isCrash = False
-            if self.hitBox[0] > portal[2]: isCrash = False
-            if self.hitBox[1] < portal[3]: isCrash = False
+            isCrash = False
+
+            pLeft  = min(portal[0], portal[2])
+            pRight = max(portal[0], portal[2])
+            pTop   = max(portal[1], portal[3])
+            pBot   = min(portal[1], portal[3])
+
+            if pLeft <= left  <= pRight and pBot <= top <= pTop: isCrash = True
+            if pLeft <= right <= pRight and pBot <= top <= pTop: isCrash = True
+            if pLeft <= left  <= pRight and pBot <= bot <= pBot: isCrash = True
+            if pLeft <= right <= pRight and pBot <= bot <= pBot: isCrash = True
+
             if isCrash:
                 id, x, y = portal[4], portal[5], portal[6]
 
@@ -273,35 +348,39 @@ class Character:
                 if map.id == id:
                     self.subState = 'jump2'
                     self.x, self.y = x, y
-                    return
+                    return False
 
-                # 맵 이동
+                ### 맵 이동 ###
                 for r in self.relic:
-                    # 조개화석
-                    if r.id == 108:
-                        r.stack = 1
                     # 수리검, 표창
-                    elif r.id == 205 or r.id == 206:
+                    if r.id == 205 or r.id == 206:
                         r.stack = 0
+                    # 조개화석
+                    elif r.id == 304:
+                        r.stack = 1
+                Relic.updataRelicStack()
+                Relic.updateChrStat()
 
                 # 리스트 초기화
                 mob.clear()
                 map.tileRect.clear()
                 map.portalRect.clear()
+                map.objectRect.clear()
+
+                # 캐릭터 세팅
+                self.x, self.y, self.dx = x, y, 0
 
                 # 맵 로드
                 map.id = id
                 map.load()
-
-                # 캐릭터 세팅
-                self.x, self.y, self.dx = x, y, 0
-                return
+                return True
+        return False
 
     def interactionCheck(self):
         map = Ingame_state.map
         for obj in map.objectRect:
-            if obj[0] <= self.x <= obj[2] and obj[3] <= self.y - 10 <= obj[1]:
-                return obj[4], obj[5], (obj[0] + obj[2]) / 2, (obj[1] + obj[3]) / 2
+            if obj[2] <= self.x <= obj[4] and obj[5] <= self.y - 10 <= obj[3]:
+                return obj
         return -1
 
     def updatePos(self, delta_time):
@@ -389,8 +468,9 @@ class Character:
             # update Cycle
             self.timer += delta_time
             if self.timer > delta_time * 5:
-                self.dy -= 2
-                self.timer = 0
+                if self.dy > -10:
+                    self.dy -= 2
+                    self.timer = 0
 
             # Frame Fix
             if self.frame > (self.MOTION_FRAME['jump'] - 1) * self.MOTION_DELAY['jump']:
@@ -423,6 +503,24 @@ class Character:
             if x: self.x = x
             if y: self.y = y
             self.dx, self.dy = dx, dy
+
+        # # 버그 캐치
+        # if self.y < -50:
+        #     mob = Ingame_state.mob
+        #     map = Ingame_state.map
+        #
+        #     # 리스트 초기화
+        #     mob.clear()
+        #     map.tileRect.clear()
+        #     map.portalRect.clear()
+        #     map.objectRect.clear()
+        #
+        #     # 맵 로드
+        #     map.id = map.id // 100 * 100
+        #     map.load()
+        #
+        #     # 캐릭터 세팅
+        #     self.x, self.y, self.dx, self.dy = x, y, 0, 0
 
         # Chr Pos Update
         self.x += self.dx
@@ -462,7 +560,8 @@ class Character:
         self.updatePos(delta_time)
 
         # 포탈 체크
-        self.portalCheck()
+        if self.portalCheck():
+            Ingame_state.map.enterEvent()
 
         # 히트박스 업데이트
         self.updateHitbox()

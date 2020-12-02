@@ -3,6 +3,8 @@ from FRAMEWORK import Base, DataManager
 from INGAME import Relic, Ingame_state
 import UI
 
+LOADING_END = False
+
 FILES = [
     "../res/Chr/chrSet.png",
     "../res/Mob/100/sheet.png",
@@ -19,16 +21,27 @@ FILES = [
     "../res/UI/Ingame/CHR_INFO_BASE.png",
     "../res/Sound/SOTE_SFX_DropRelic_Rocky.wav",
     "../res/Sound/SOTE_SFX_FastAtk_v2.wav",
-    "../res/Sound/SOTE_SFX_HealShort_1_v2.wav"
+    "../res/Sound/SOTE_SFX_HealShort_1_v2.wav",
+    "../res/Sound/STS_Level1_NewMix_v1.mp3",
+    "../res/Sound/STS_BossVictoryStinger_4_v3_MUSIC.wav",
+    "../res/Sound/STS_BossVictoryStinger_1_v3_SFX.wav"
 ]
 
 # 불
-for i in range(120):
+for i in range(119 + 1):
     FILES.append('../res/Effect/Fire/1_' + str(i) + '.png')
 
 # 불꽃
-for i in range(33):
+for i in range(32 + 1):
     FILES.append('../res/Effect/Frames/1_' + str(i) + '.png')
+
+# 번개
+for i in range(6 + 1):
+    FILES.append('../res/Effect/Thunder/' + str(i) + '.png')
+
+# 파이어볼
+for i in range(60 + 1):
+    FILES.append('../res/Effect/Fireball/1_' + str(i) + '.png')
 
 JSON_FILES = [
     "../res/Chr/info.json",
@@ -40,11 +53,11 @@ JSON_FILES = [
 ]
 
 def enter():
-    global frame_interval, index, bgr, end
+    global frame_interval, index, bgr, LOADING_END
     UI.FONT['12'] = load_font('../res/UI/모리스9.ttf', 12)
     UI.FONT['24'] = load_font('../res/UI/모리스9.ttf', 24)
     bgr = load_image('../res/UI/Ingame/black.png')
-    end = False
+    LOADING_END = False
 
     frame_interval = Base.Frame_interval
     Base.Frame_interval = 0
@@ -57,7 +70,7 @@ def exit():
     Base.Frame_interval = frame_interval
 
 def update():
-    global index, display, end
+    global index, display, LOADING_END
     if index < len(FILES):
         display = 'Loading...' + str(int(index / (len(FILES) + len(JSON_FILES)) * 100)) + '%'
         DataManager.load(FILES[index])
@@ -67,13 +80,13 @@ def update():
         loadJSONFile(index - len(FILES))
         index += 1
     else:
-        end = True
+        LOADING_END = True
 
 def draw():
     global display
     bgr.clip_draw_to_origin(0, 0, get_canvas_width(), get_canvas_height(), 0, 0)
 
-    if end:
+    if LOADING_END:
         display = '로딩 완료!'
         display2 = '모험을 시작하려면 아무 키나 눌러주세요!'
         sx, sy = UI.get_text_extent(UI.FONT['12'], display)
@@ -88,7 +101,7 @@ def eventHandler(e):
     if e.type == SDL_QUIT or (e.type, e.key) == (SDL_KEYDOWN, SDLK_ESCAPE):
         Base.running = False
 
-    if end and e.type == SDL_KEYDOWN:
+    if LOADING_END and e.type == SDL_KEYDOWN:
         Base.Frame_interval = frame_interval
         Base.changeState(Ingame_state)
         return
