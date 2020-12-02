@@ -72,3 +72,6 @@ def changeBGM(file, roop=True):
             BGM.repeat_play()
         else:
             BGM.play(1)
+
+# TODO
+# 301번맵 위에 있는 상자 없애야함

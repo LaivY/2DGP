@@ -23,7 +23,7 @@ class Map:
 
         # Start map
         if self.id == -1:
-            self.id = 100
+            self.id = 299
         self.enterEvent()
 
         # Map file load
@@ -49,7 +49,7 @@ class Map:
             # Add Monster
             if f[0] == 'm':
                 mobId = 100 * (type[1] + 1) + type[0]
-                if mobId == 200:
+                if mobId == 103:
                     Ingame_state.mob.append(Boss(mobId, *pos))
                 else:
                     Ingame_state.mob.append(Mob(mobId, *pos))

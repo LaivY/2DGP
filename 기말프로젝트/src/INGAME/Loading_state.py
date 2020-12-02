@@ -10,7 +10,7 @@ FILES = [
     "../res/Mob/100/sheet.png",
     "../res/Mob/101/sheet.png",
     "../res/Mob/102/sheet.png",
-    "../res/Mob/200/sheet.png",
+    "../res/Mob/103/sheet.png",
     "../res/Map/tileSet.png",
     "../res/Item/relic.png",
     "../res/UI/Ingame/ad.png",
@@ -49,7 +49,7 @@ JSON_FILES = [
     "../res/Mob/100/info.json",
     "../res/Mob/101/info.json",
     "../res/Mob/102/info.json",
-    "../res/Mob/200/info.json",
+    "../res/Mob/103/info.json",
 ]
 
 def enter():
