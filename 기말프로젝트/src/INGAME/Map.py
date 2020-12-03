@@ -23,7 +23,7 @@ class Map:
 
         # Start map
         if self.id == -1:
-            self.id = 299
+            self.id = 400
         self.enterEvent()
 
         # Map file load

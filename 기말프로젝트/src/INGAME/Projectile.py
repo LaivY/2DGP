@@ -4,7 +4,7 @@ from INGAME import Damage_Parser
 
 Projectiles = []
 
-debug = True
+debug = False
 
 def createProjectile(type, pos, mag, dmg, time, dy=-0.1):
     if type == 'explosion':

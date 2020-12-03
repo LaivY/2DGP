@@ -3,7 +3,7 @@ from FRAMEWORK import Base, DataManager
 from INGAME import Ingame_state, Relic
 import Main_state
 import UI
-debug = False
+debug = True
 
 # 달리기 입력 무시
 RUN_EXCEPTION = (
@@ -40,7 +40,7 @@ class Character:
         ### 캐릭터 시스템 관련 변수들 ###
         self.frame, self.timer = 0, 0                                           # 프레임, 타이머
         self.state, self.subState = 'idle', 'none'                              # 상태, 서브상태
-        self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 400, 600, 0, 0   # 좌우, 좌표와 움직임속도
+        self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 200, 600, 0, 0   # 좌우, 좌표와 움직임속도
         self.relicGainPos = []                                                  # 유물 획득 위치 정보
         self.onlyOnce = {}
 
@@ -64,6 +64,11 @@ class Character:
 
     def load(self):
         self.image = DataManager.load("../res/Chr/chrSet.png")
+        if debug:
+            Relic.addRandomRelic()
+            Relic.addRandomRelic()
+            Relic.addRandomRelic()
+            Relic.updateChrStat()
 
     def ini(self):
         ### 캐릭터 키보드 관련 변수들 ###
@@ -109,6 +114,7 @@ class Character:
                 self.onlyOnce.update( {'die' : True} )
                 Ingame_state.BGM.stop()
                 DataManager.load('../res/Sound/STS_DeathStinger_4_v3_MUSIC.wav').play()
+                self.saveTravelData()
 
         # 클리어했을 시
         if self.onlyOnce.get('clear'):
@@ -568,3 +574,49 @@ class Character:
 
         # 공격범위 업데이트
         self.updateAttackRange()
+
+    def saveTravelData(self):
+        data = []
+
+        # 이미 도전 기록이 있다면 데이터를 불러옴
+        try:
+            with open('../res/Chr/travel.json', 'r', encoding="utf-8") as f:
+                data = json.load(f)
+        except:
+            pass
+
+        result = {}
+        relic  = []
+
+        # 결과
+        result.update({'clear' : False})
+
+        # 시간
+        import time
+        localTime = time.localtime()
+        year      = localTime.tm_year
+        month     = localTime.tm_mon
+        day       = localTime.tm_mday
+        hour      = localTime.tm_hour
+        min       = localTime.tm_min
+
+        endTime = str(year) + '년 ' + str(month) + '월 ' + str(day) + '일 ' + \
+            str(hour) + '시 ' + str(min) + '분'
+
+        result.update({'time' : endTime})
+
+        # 죽은곳
+        deadPlace = Ingame_state.map.id // 100
+        result.update({'pos' : '지하 ' + str(deadPlace) + '층'})
+
+        # 유물
+        for r in self.relic:
+            relic.append({'id' : r.id,
+                        'name' : r.name})
+
+        # 합치기
+        result.update({'relic' : relic})
+        data.append(result)
+
+        with open('../res/Chr/travel.json', 'w', encoding="utf-8") as make_file:
+            json.dump(data, make_file, ensure_ascii=False, indent="\t")

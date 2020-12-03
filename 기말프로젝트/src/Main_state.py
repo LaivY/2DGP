@@ -1,6 +1,7 @@
 from pico2d import *
 from FRAMEWORK import Base, DataManager
 from INGAME import Loading_state, Ingame_state
+import Score_state
 
 MOUSE_POSITION = [0, 0]
 MOUSE_ON_BUTTON = -1
@@ -139,6 +140,8 @@ def eventHandler(e):
     elif (e.type, e.button) == (SDL_MOUSEBUTTONDOWN, SDL_BUTTON_LEFT):
         # 241 x 49
         if 800 / 2 - 241 / 2 <= e.x <= 800 / 2 + 241 / 2:
+
+            # 게임시작
             if 295 <= e.y <= 295 + 49:
                 bgm.stop()
                 mouseClick.play()
@@ -150,8 +153,13 @@ def eventHandler(e):
                         Base.changeState(Loading_state)
                 except:
                     pass
+
+            # 도전 기록
             elif 366 <= e.y <= 366 + 49:
                 mouseClick.play()
+                Base.changeState(Score_state)
+
+            # 게임 종료
             elif 436 <= e.y <= 436 + 49:
                 mouseClick.play()
                 Base.running = False

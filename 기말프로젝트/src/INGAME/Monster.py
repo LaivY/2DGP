@@ -433,8 +433,8 @@ class Boss(Monster):
         time = get_time() - self.startTime
 
         # 랜덤으로 하나를 골라서 해당 패턴을 사용할 수 있는지 체크
-        pattern = randint(0, 5)
-        #pattern = 5
+        #pattern = randint(0, 5)
+        pattern = 4
 
         # 내려찍기 패턴
         if pattern == 0:
@@ -609,7 +609,7 @@ class Boss(Monster):
                 self.skillCount += 1
 
                 meteorXPos = randint(0, 800)
-                Projectile.createProjectile('meteor', (meteorXPos, 620), 2, 5, get_time(), -5)
+                Projectile.createProjectile('meteor', (meteorXPos, 620), randint(150, 250) / 100, 5, get_time(), -5)
 
             if self.timer['order'] >= 10:
                 self.changeOrder('Meteor_After')

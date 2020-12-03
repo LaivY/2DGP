@@ -51,6 +51,7 @@ def changeState(new_state):
 
 def push(new_state):
     global GameState
+
     size = len(GameState)
     if size == 1: quit()
     elif size > 1:
