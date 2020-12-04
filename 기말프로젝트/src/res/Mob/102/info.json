@@ -5,9 +5,9 @@
 		"ySize": 64,
 		"sxSize": 64,
 		"sySize": 64,
-		"hp": 30,
+		"hp": 80,
 		"ad": 10,
-		"df": 1,
+		"df": 0,
 		"speed": 0
 	},
 

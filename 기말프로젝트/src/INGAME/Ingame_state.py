@@ -23,11 +23,11 @@ def eventHandler(e):
     UI.eventHandler(e)
 
 def update():
-    chr.update(Base.delta_time)
+    chr.update(Base.FRAME_SLEEP_TIME)
     for i in mob:
         if chr.state == 'idle':
             i.hitBy = 'none'
-        i.update(Base.delta_time)
+        i.update(Base.FRAME_SLEEP_TIME)
 
 def draw():
     map.draw()
@@ -43,7 +43,7 @@ def draw():
 
 def enter():
     global BGM
-    BGM = DataManager.load('../res/Sound/STS_Level1_NewMix_v1.mp3')
+    BGM = DataManager.load('res/Sound/STS_Level1_NewMix_v1.mp3')
     BGM.repeat_play()
 
     map.load()
@@ -56,6 +56,8 @@ def exit():
     map.tileRect.clear()
     map.portalRect.clear()
     map.objectRect.clear()
+    map.id = -1
+    Projectile.Projectiles.clear()
     chr.ini()
     BGM = None
 
@@ -72,6 +74,3 @@ def changeBGM(file, roop=True):
             BGM.repeat_play()
         else:
             BGM.play(1)
-
-# TODO
-# 301번맵 위에 있는 상자 없애야함

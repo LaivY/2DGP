@@ -43,7 +43,7 @@ class Monster:
         self.MOTION_ATTACK_RANGE = {}
 
     def load(self):
-        self.image = DataManager.load('../res/Mob/' + str(self.id) + '/sheet.png')
+        self.image = DataManager.load('res/Mob/' + str(self.id) + '/sheet.png')
         self.MOTION_YSHEET       = Monster.MOB_MOTION_DATA[str(self.id)]['YSHEET']
         self.MOTION_DELAY        = Monster.MOB_MOTION_DATA[str(self.id)]['DELAY']
         self.MOTION_FRAME        = Monster.MOB_MOTION_DATA[str(self.id)]['FRAME']
@@ -410,6 +410,7 @@ class Boss(Monster):
                                     'Thunder': 0,
                                     'Meteor': 0,
                                     'Fireball': 0,
+                                    'RandomExplosion' : 0,
                                     'Attack' : 0
                                    })
         self.skillCount = 0
@@ -422,6 +423,18 @@ class Boss(Monster):
         self.order = order
 
     def setOrder(self):
+        # 입장 2초 후 부터 패턴 시작
+        if get_time() - self.startTime < 2:
+            return
+
+        # HP 20% 패턴
+        if self.hp <= self.maxHp * 0.2 and self.onlyOnce.get('HP20') == None:
+            self.onlyOnce.update({'HP20' : True})
+            self.skillCoolTime['RandomExplosion'] = get_time()
+            self.order = 'RandomExplosion'
+            UI.addString([self.x, self.y], '끈질기구나!!', (255, 100, 100), 2, 0.1, '24')
+            return
+
         if self.state == 'hit' or \
            self.state == 'fall' or \
            self.order != 'Chase':
@@ -430,11 +443,10 @@ class Boss(Monster):
         chr = Ingame_state.chr
 
         # 보스방 입장 후 지난 시간
-        time = get_time() - self.startTime
+        #time = get_time() - self.startTime
 
         # 랜덤으로 하나를 골라서 해당 패턴을 사용할 수 있는지 체크
-        #pattern = randint(0, 5)
-        pattern = 4
+        pattern = randint(0, 5)
 
         # 내려찍기 패턴
         if pattern == 0:
@@ -500,9 +512,9 @@ class Boss(Monster):
         self.frame += 1
         if self.frame >= self.MOTION_FRAME[self.state] * self.MOTION_DELAY[self.state]:
             self.frame = 0
-            if self.state == 'hit' or 'attack' in self.state:
-                self.frame = 0
+            if self.state == 'hit':
                 self.state = 'idle'
+            if 'attack' in self.state:
                 self.order = 'Chase'
 
             elif self.state == 'die':
@@ -519,9 +531,9 @@ class Boss(Monster):
         if self.order == 'RapidFall':
             if isLanding:
                 if self.dir == 'RIGHT':
-                    Projectile.createProjectile('explosion', (self.x - 5, self.y), 3, 5, get_time())
+                    Projectile.createProjectile('explosion', (self.x - 5, self.y), 3, 15, get_time())
                 else:
-                    Projectile.createProjectile('explosion', (self.x + 5, self.y), 3, 5, get_time())
+                    Projectile.createProjectile('explosion', (self.x + 5, self.y), 3, 15, get_time())
                 self.changeOrder('RapidFall_After')
                 self.y, self.dy = y, 0
                 return
@@ -529,7 +541,7 @@ class Boss(Monster):
         elif self.order == 'RapidFall_After':
             if self.state != 'hit':
                 self.state = 'idle'
-            if self.timer['order'] > 5:
+            if self.timer['order'] > 2:
                 self.changeOrder('Chase')
 
         # 연쇄 폭발
@@ -540,8 +552,8 @@ class Boss(Monster):
             if self.timer['skill'] > 1:
                 self.timer['skill'] = 0.9
                 self.skillCount += 1
-                Projectile.createProjectile('explosion', (self.x + self.skillCount * 50, self.y), 2, 3, get_time())
-                Projectile.createProjectile('explosion', (self.x - self.skillCount * 50, self.y), 2, 3, get_time())
+                Projectile.createProjectile('explosion', (self.x + self.skillCount * 50, self.y), 2, 10, get_time())
+                Projectile.createProjectile('explosion', (self.x - self.skillCount * 50, self.y), 2, 10, get_time())
 
             if self.skillCount >= 20:
                 self.changeOrder('WaveExplosion_After')
@@ -551,7 +563,7 @@ class Boss(Monster):
         elif self.order == 'WaveExplosion_After':
             if self.state != 'hit':
                 self.state = 'idle'
-            if self.timer['order'] > 5:
+            if self.timer['order'] > 1:
                 self.changeOrder('Chase')
 
         # 연쇄 폭발2
@@ -562,8 +574,8 @@ class Boss(Monster):
             if self.timer['skill'] > 0.1:
                 self.timer['skill'] = 0
                 self.skillCount += 1
-                Projectile.createProjectile('explosion', (self.x + (20 - self.skillCount) * 50, self.y), 2, 3, get_time())
-                Projectile.createProjectile('explosion', (self.x - (20 - self.skillCount) * 50, self.y), 2, 3, get_time())
+                Projectile.createProjectile('explosion', (self.x + (20 - self.skillCount) * 50, self.y), 2, 10, get_time())
+                Projectile.createProjectile('explosion', (self.x - (20 - self.skillCount) * 50, self.y), 2, 10, get_time())
 
             if self.skillCount >= 20:
                 self.changeOrder('WaveExplosion2_After')
@@ -573,7 +585,7 @@ class Boss(Monster):
         elif self.order == 'WaveExplosion2_After':
             if self.state != 'hit':
                 self.state = 'idle'
-            if self.timer['order'] > 5:
+            if self.timer['order'] > 1:
                 self.changeOrder('Chase')
 
         # 번개
@@ -584,7 +596,7 @@ class Boss(Monster):
             if self.timer['skill'] > 1:
                 self.timer['skill'] = 0.5
                 self.skillCount += 1
-                Projectile.createProjectile('thunder', (chr.x, self.y + 128), 2, 5, get_time())
+                Projectile.createProjectile('thunder', (chr.x, self.y + 128), 2, 20, get_time())
 
             if self.skillCount >= 7:
                 self.changeOrder('Thunder_After')
@@ -609,11 +621,10 @@ class Boss(Monster):
                 self.skillCount += 1
 
                 meteorXPos = randint(0, 800)
-                Projectile.createProjectile('meteor', (meteorXPos, 620), randint(150, 250) / 100, 5, get_time(), -5)
+                Projectile.createProjectile('meteor', (meteorXPos, 620), randint(150, 250) / 100, 8, get_time(), -5)
 
             if self.timer['order'] >= 10:
                 self.changeOrder('Meteor_After')
-                UI.addString([self.x, self.y], '아직도 살아있단 말이냐', (255, 255, 255), 3, 0.1)
 
             self.timer['skill'] += delta_time
 
@@ -621,7 +632,7 @@ class Boss(Monster):
             if self.state != 'hit':
                 self.state = 'idle'
 
-            if self.timer['order'] > 10:
+            if self.timer['order'] > 8:
                 self.changeOrder('Chase')
 
         # 파이어볼
@@ -630,15 +641,15 @@ class Boss(Monster):
             self.state = 'idle'
 
             if self.timer['skill'] > 1:
-                self.timer['skill'] = 0.9
+                self.timer['skill'] = 0
                 self.skillCount += 1
 
                 if self.x < chr.x:
-                    Projectile.createProjectile('fireball', (self.x + 50, self.y), 5, 5, get_time(), 5)
+                    Projectile.createProjectile('fireball', (self.x + 10, self.y), 5, 15, get_time(), 5)
                 else:
-                    Projectile.createProjectile('fireball', (self.x - 50, self.y), 5, 5, get_time(), -5)
+                    Projectile.createProjectile('fireball', (self.x - 10, self.y), 5, 15, get_time(), -5)
 
-            if self.skillCount >= 1:
+            if self.skillCount >= 3:
                 self.changeOrder('Fireball_After')
 
             self.timer['skill'] += delta_time
@@ -647,7 +658,34 @@ class Boss(Monster):
             if self.state != 'hit':
                 self.state = 'idle'
 
-            if self.timer['order'] > 1:
+            if self.timer['order'] > 3:
+                self.changeOrder('Chase')
+
+        # 랜덤폭발
+        elif self.order == 'RandomExplosion':
+            self.state = 'fall'
+            self.x, self.y = 400, 500
+            self.dx = 0
+
+            if 0 <= self.timer['skill'] <= 2:
+                self.sxSize, self.sySize = 0, 0
+            else:
+                self.sxSize, self.sySize = 250, 250
+
+            if 2 <= self.timer['skill'] <= 6:
+                Projectile.createProjectile('explosion', (randint(0, 800), randint(0, 600)), 2, 8, get_time())
+
+            if self.timer['skill'] >= 7:
+                self.changeOrder('RandomExplosion_After')
+
+            self.timer['skill'] += delta_time
+            self.timer['order'] += delta_time
+            return
+
+        elif self.order == 'RandomExplosion_After':
+            if self.state != 'hit':
+                self.state = 'idle'
+            if self.timer['order'] > 8:
                 self.changeOrder('Chase')
 
         # 추적
@@ -662,11 +700,11 @@ class Boss(Monster):
             if self.x < chr.x:
                 self.dir = 'RIGHT'
                 self.state = 'move'
-                self.dx = 1.2
+                self.dx = 1.5
             else:
                 self.dir = 'LEFT'
                 self.state = 'move'
-                self.dx = -1.2
+                self.dx = -1.5
 
         elif 'Attack' in self.order:
             self.state = self.order.lower()
@@ -723,11 +761,6 @@ class Boss(Monster):
         self.hitCheck()
         self.attackCheck()
 
-        # if get_time() - self.startTime > 10 and \
-        #     self.onlyOnce.get('10') != True:
-        #     self.onlyOnce.update({'10' : True})
-        #     print('10초 경과')
-
     def drawHpBar(self):
-        image = DataManager.load('../res/UI/Ingame/CHR_HP_BAR.png')
+        image = DataManager.load('res/UI/Ingame/CHR_HP_BAR.png')
         image.clip_draw_to_origin(0, 0, image.w, image.h, 10, 544, (self.hp / self.maxHp) * (get_canvas_width() - 20), image.h)

@@ -19,15 +19,15 @@ class Map:
     def load(self):
         # TileSet load
         if Map.TileSet is None:
-            Map.TileSet = load_image('../res/Map/tileSet.png')
+            Map.TileSet = load_image('res/Map/tileSet.png')
 
         # Start map
         if self.id == -1:
-            self.id = 400
+            self.id = 100
         self.enterEvent()
 
         # Map file load
-        file = open('../res/Map/' + str(self.id) + '.txt', 'r')
+        file = open('res/Map/' + str(self.id) + '.txt', 'r')
 
         # Save map size
         fLine = file.readline()
@@ -138,9 +138,9 @@ class Map:
             chr.onlyOnce.update({str(self.id // 100) + 'Floor': True})
             UI.addString([400, 300], '지하' + str(self.id // 100) + '층', (255, 100, 100), 3, 0.05, 24)
 
-        # 보스맵 배경음 변경
+        # 보스맵 입장
         if self.id == 400:
-            Ingame_state.changeBGM('../res/Sound/STS_Boss4_v6.mp3')
+            Ingame_state.changeBGM('res/Sound/STS_Boss4_v6.mp3')
 
     def drawTutorialText(self):
         if self.id == 100:

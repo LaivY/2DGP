@@ -5,7 +5,7 @@
 		"ySize": 64,
 		"sxSize": 64,
 		"sySize": 64,
-		"hp": 35,
+		"hp": 40,
 		"ad": 5,
 		"df": 0,
 		"speed": 0
@@ -23,12 +23,12 @@
 
 	{
 		"TYPE": "MOTION_DELAY",
-		"attack": 15,
+		"attack": 13,
 		"die": 10,
 		"hit": 15,
 		"idle": 15,
 		"fall": 15,
-		"move": 10
+		"move": 7
 	},
 
 	{

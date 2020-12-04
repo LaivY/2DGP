@@ -45,6 +45,7 @@ def addRandomRelic():
             if i.id == _id:
                 Pass = False
                 break
+
         if Pass:
             # 유물 데이터 설정
             r = relic(_id)
@@ -82,7 +83,7 @@ def addRandomRelic():
             
             inven.append(r)
             UI.addString([chr.x, chr.y + 5], str(RELIC_INFO[str(_id)]['NAME']) + '을(를) 획득했습니다!', (255, 255, 255), 1, 0.1, 12)
-            DataManager.load('../res/Sound/SOTE_SFX_DropRelic_Rocky.wav').play()
+            DataManager.load('res/Sound/SOTE_SFX_DropRelic_Rocky.wav').play()
             break
 
     # 마트료시카

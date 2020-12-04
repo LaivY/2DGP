@@ -1,73 +1,85 @@
 from pico2d import *
 from FRAMEWORK import Base, DataManager
 from INGAME import Relic, Ingame_state
+import Main_state
 import UI
 
 LOADING_END = False
 
 FILES = [
-    "../res/Chr/chrSet.png",
-    "../res/Mob/100/sheet.png",
-    "../res/Mob/101/sheet.png",
-    "../res/Mob/102/sheet.png",
-    "../res/Mob/103/sheet.png",
-    "../res/Map/tileSet.png",
-    "../res/Item/relic.png",
-    "../res/UI/Ingame/ad.png",
-    "../res/UI/Ingame/as.png",
-    "../res/UI/Ingame/cri.png",
-    "../res/UI/Ingame/df.png",
-    "../res/UI/Ingame/CHR_HP_BAR.png",
-    "../res/UI/Ingame/CHR_INFO_BASE.png",
-    "../res/Sound/SOTE_SFX_DropRelic_Rocky.wav",
-    "../res/Sound/SOTE_SFX_FastAtk_v2.wav",
-    "../res/Sound/SOTE_SFX_HealShort_1_v2.wav",
-    "../res/Sound/STS_Level1_NewMix_v1.mp3",
-    "../res/Sound/STS_BossVictoryStinger_4_v3_MUSIC.wav",
-    "../res/Sound/STS_BossVictoryStinger_1_v3_SFX.wav"
+    "res/Chr/chrSet.png",
+    "res/Mob/100/sheet.png",
+    "res/Mob/101/sheet.png",
+    "res/Mob/102/sheet.png",
+    "res/Mob/103/sheet.png",
+    "res/Map/tileSet.png",
+    "res/Item/relic.png",
+    "res/UI/Ingame/ad.png",
+    "res/UI/Ingame/as.png",
+    "res/UI/Ingame/cri.png",
+    "res/UI/Ingame/df.png",
+    "res/UI/Ingame/CHR_HP_BAR.png",
+    "res/UI/Ingame/CHR_INFO_BASE.png",
+    "res/UI/Main/BACKGROUND0.png",
+    "res/UI/Main/BACKGROUND1.png",
+    "res/UI/Main/BACKGROUND2.png",
+    "res/UI/Main/START_NORMAL.png",
+    "res/UI/Main/SHOW_RECORD_NORMAL.png",
+    "res/UI/Main/EXIT_NORMAL.png",
+    "res/UI/Main/START_MOUSE_OVER.png",
+    "res/UI/Main/SHOW_RECORD_MOUSE_OVER.png",
+    "res/UI/Main/EXIT_MOUSE_OVER.png",
+    "res/Sound/SOTE_SFX_UIClick_1_v2.wav",
+    "res/Sound/SOTE_SFX_UIHover_v2.wav",
+    "res/Sound/SOTE_Level1_Ambience_v6.mp3",
+    "res/Sound/SOTE_SFX_DropRelic_Rocky.wav",
+    "res/Sound/SOTE_SFX_FastAtk_v2.wav",
+    "res/Sound/SOTE_SFX_HealShort_1_v2.wav",
+    "res/Sound/STS_Level1_NewMix_v1.mp3",
+    "res/Sound/STS_BossVictoryStinger_4_v3_MUSIC.wav",
+    "res/Sound/STS_BossVictoryStinger_1_v3_SFX.wav"
 ]
 
 # 불
 for i in range(119 + 1):
-    FILES.append('../res/Effect/Fire/1_' + str(i) + '.png')
+    FILES.append('res/Effect/Fire/1_' + str(i) + '.png')
 
 # 불꽃
 for i in range(32 + 1):
-    FILES.append('../res/Effect/Frames/1_' + str(i) + '.png')
+    FILES.append('res/Effect/Frames/1_' + str(i) + '.png')
 
 # 번개
 for i in range(6 + 1):
-    FILES.append('../res/Effect/Thunder/' + str(i) + '.png')
+    FILES.append('res/Effect/Thunder/' + str(i) + '.png')
 
 # 파이어볼
 for i in range(60 + 1):
-    FILES.append('../res/Effect/Fireball/1_' + str(i) + '.png')
+    FILES.append('res/Effect/Fireball/1_' + str(i) + '.png')
 
 JSON_FILES = [
-    "../res/Chr/info.json",
-    "../res/Item/relic_info.json",
-    "../res/Mob/100/info.json",
-    "../res/Mob/101/info.json",
-    "../res/Mob/102/info.json",
-    "../res/Mob/103/info.json",
+    "res/Chr/info.json",
+    "res/Item/relic_info.json",
+    "res/Mob/100/info.json",
+    "res/Mob/101/info.json",
+    "res/Mob/102/info.json",
+    "res/Mob/103/info.json",
 ]
 
 def enter():
-    global frame_interval, index, bgr, LOADING_END
-    UI.FONT['12'] = load_font('../res/UI/모리스9.ttf', 12)
-    UI.FONT['24'] = load_font('../res/UI/모리스9.ttf', 24)
-    bgr = load_image('../res/UI/Ingame/black.png')
-    LOADING_END = False
+    global FPS, index, bgr
+    UI.FONT['12'] = load_font('res/UI/모리스9.ttf', 12)
+    UI.FONT['24'] = load_font('res/UI/모리스9.ttf', 24)
+    bgr = load_image('res/UI/Ingame/black.png')
 
-    frame_interval = Base.Frame_interval
-    Base.Frame_interval = 0
+    FPS = Base.FPS
+    Base.FPS = 0
 
     index = 0
 
 def exit():
-    global frame_interval, bgr
+    global FPS, bgr
     del bgr
-    Base.Frame_interval = frame_interval
+    Base.FPS = FPS
 
 def update():
     global index, display, LOADING_END
@@ -102,8 +114,8 @@ def eventHandler(e):
         Base.running = False
 
     if LOADING_END and e.type == SDL_KEYDOWN:
-        Base.Frame_interval = frame_interval
-        Base.changeState(Ingame_state)
+        Base.Frame_interval = FPS
+        Base.changeState(Main_state)
         return
 
 def loadJSONFile(i):
@@ -161,7 +173,7 @@ def loadJSONFile(i):
                 MOTION_ATTACK_RANGE = dict(d)
                 del MOTION_ATTACK_RANGE['TYPE']
 
-        id = str(JSON_FILES[i]).split('/')[3]
+        id = str(JSON_FILES[i]).split('/')[2]
         Ingame_state.Monster.MOB_MOTION_DATA[id] = {
             'INFO'        : MOTION_INFO,
             'YSHEET'      : MOTION_YSHEET,

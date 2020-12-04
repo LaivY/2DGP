@@ -3,7 +3,8 @@ from FRAMEWORK import Base, DataManager
 from INGAME import Ingame_state, Relic
 import Main_state
 import UI
-debug = True
+
+debug = False
 
 # 달리기 입력 무시
 RUN_EXCEPTION = (
@@ -28,6 +29,7 @@ SLIDE_EXCEPTION = (
     'air_attack1', 'air_attack2', 'slide'
 )
 
+
 class Character:
     # 50x37
     def __init__(self):
@@ -38,21 +40,21 @@ class Character:
         self.attackKeyDown = False
 
         ### 캐릭터 시스템 관련 변수들 ###
-        self.frame, self.timer = 0, 0                                           # 프레임, 타이머
-        self.state, self.subState = 'idle', 'none'                              # 상태, 서브상태
-        self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 200, 600, 0, 0   # 좌우, 좌표와 움직임속도
-        self.relicGainPos = []                                                  # 유물 획득 위치 정보
+        self.frame, self.timer = 0, 0  # 프레임, 타이머
+        self.state, self.subState = 'idle', 'none'  # 상태, 서브상태
+        self.dir, self.x, self.y, self.dx, self.dy = 'RIGHT', 200, 600, 0, 0  # 좌우, 좌표와 움직임속도
+        self.relicGainPos = []  # 유물 획득 위치 정보
         self.onlyOnce = {}
 
         ### 캐릭터 피격, 공격 관련 변수들 ###
-        self.hitBox = (0, 0, 0, 0)                                              # 히트박스
-        self.attack_range = (0, 0, 0, 0)                                        # 공격범위
-        self.invincible_time = 0                                                # 남은 무적 시간
+        self.hitBox = (0, 0, 0, 0)  # 히트박스
+        self.attack_range = (0, 0, 0, 0)  # 공격범위
+        self.invincible_time = 0  # 남은 무적 시간
 
         ### 캐릭터 스탯 관련 변수들 ###
-        self.maxHP, self.hp = 50, 50                                            # 최대HP, 현재HP
-        self.ad, self.AS, self.cri, self.df  = 5, 0, 5, 0                       # 공격력, 공격속도, 치명타, 방어력
-        self.relic = []                                                         # 유물
+        self.maxHP, self.hp = 50, 50  # 최대HP, 현재HP
+        self.ad, self.AS, self.cri, self.df = 5, 0, 5, 0  # 공격력, 공격속도, 치명타, 방어력
+        self.relic = []  # 유물
 
         ### 캐릭터 모션별 범위 변수들 :: JSON ###
         self.MOTION_YSHEET = {}
@@ -63,7 +65,7 @@ class Character:
         self.MOTION_ATTACK_RANGE = {}
 
     def load(self):
-        self.image = DataManager.load("../res/Chr/chrSet.png")
+        self.image = DataManager.load("res/Chr/chrSet.png")
         if debug:
             Relic.addRandomRelic()
             Relic.addRandomRelic()
@@ -78,21 +80,21 @@ class Character:
         self.attackKeyDown = False
 
         ### 캐릭터 시스템 관련 변수들 ###
-        self.frame, self.timer = 0, 0                                           # 프레임, 타이머
-        self.state, self.subState = 'idle', 'none'                              # 상태, 서브상태
-        self.dir, self.x, self.y, self.dx, self. dy = 'RIGHT', 100, 400, 0, 0   # 좌우, 좌표와 움직임속도
-        self.relicGainPos = []                                                  # 유물 획득 위치 정보
+        self.frame, self.timer = 0, 0  # 프레임, 타이머
+        self.state, self.subState = 'idle', 'none'  # 상태, 서브상태
+        self.dir, self.x, self.y, self.dx, self.dy = 'RIGHT', 100, 400, 0, 0  # 좌우, 좌표와 움직임속도
+        self.relicGainPos = []  # 유물 획득 위치 정보
         self.onlyOnce = {}
 
         ### 캐릭터 피격, 공격 관련 변수들 ###
-        self.hitBox = (0, 0, 0, 0)                                              # 히트박스
-        self.attack_range = (0, 0, 0, 0)                                        # 공격범위
-        self.invincible_time = 0                                                # 남은 무적 시간
+        self.hitBox = (0, 0, 0, 0)  # 히트박스
+        self.attack_range = (0, 0, 0, 0)  # 공격범위
+        self.invincible_time = 0  # 남은 무적 시간
 
         ### 캐릭터 스탯 관련 변수들 ###
-        self.maxHP, self.hp = 50, 50                                            # 최대HP, 현재HP
-        self.ad, self.AS, self.cri, self.df  = 5, 0, 5, 0                       # 공격력, 공격속도, 치명타, 방어력
-        self.relic = []                                                         # 유물
+        self.maxHP, self.hp = 50, 50  # 최대HP, 현재HP
+        self.ad, self.AS, self.cri, self.df = 5, 0, 5, 0  # 공격력, 공격속도, 치명타, 방어력
+        self.relic = []  # 유물
 
     def draw(self):
         if 'jump' in self.subState:
@@ -103,28 +105,31 @@ class Character:
             ySheet = self.MOTION_YSHEET[self.state]
 
         if self.dir == 'RIGHT':
-            self.image.clip_draw(self.frame // self.MOTION_DELAY[state] % self.MOTION_FRAME[state] * 50, ySheet * 37, 50, 37, self.x, self.y)
+            self.image.clip_draw(self.frame // self.MOTION_DELAY[state] % self.MOTION_FRAME[state] * 50, ySheet * 37,
+                                 50, 37, self.x, self.y)
         elif self.dir == 'LEFT':
-            self.image.clip_composite_draw(self.frame // self.MOTION_DELAY[state] % self.MOTION_FRAME[state] * 50, ySheet * 37, 50, 37, 0, 'h', self.x, self.y, 50, 37)
+            self.image.clip_composite_draw(self.frame // self.MOTION_DELAY[state] % self.MOTION_FRAME[state] * 50,
+                                           ySheet * 37, 50, 37, 0, 'h', self.x, self.y, 50, 37)
 
         # 사망했을 시
         if self.state == 'die':
-            DataManager.load('../res/UI/Ingame/die.png').draw(get_canvas_width() / 2, get_canvas_height() / 2)
+            DataManager.load('res/UI/Ingame/die.png').draw(get_canvas_width() / 2, get_canvas_height() / 2)
             if self.onlyOnce.get('die') is None:
-                self.onlyOnce.update( {'die' : True} )
+                self.onlyOnce.update({'die': True})
                 Ingame_state.BGM.stop()
-                DataManager.load('../res/Sound/STS_DeathStinger_4_v3_MUSIC.wav').play()
-                self.saveTravelData()
+                DataManager.load('res/Sound/STS_DeathStinger_4_v3_MUSIC.wav').play()
+                self.saveTravelData(False)
 
         # 클리어했을 시
         if self.onlyOnce.get('clear'):
-            DataManager.load('../res/UI/Ingame/clear.png').draw(get_canvas_width() / 2, get_canvas_height() / 2)
+            DataManager.load('res/UI/Ingame/clear.png').draw(get_canvas_width() / 2, get_canvas_height() / 2)
 
             if self.onlyOnce.get('play_clear_sound') is None:
-                self.onlyOnce.update( {'play_clear_sound' : True} )
+                self.onlyOnce.update({'play_clear_sound': True})
                 Ingame_state.BGM.stop()
-                DataManager.load('../res/Sound/STS_BossVictoryStinger_1_v3_SFX.wav').play()
-                DataManager.load('../res/Sound/STS_BossVictoryStinger_4_v3_MUSIC.wav').play()
+                DataManager.load('res/Sound/STS_BossVictoryStinger_1_v3_SFX.wav').play()
+                DataManager.load('res/Sound/STS_BossVictoryStinger_4_v3_MUSIC.wav').play()
+                self.saveTravelData(True)
 
         if debug:
             draw_rectangle(self.attack_range[0], self.attack_range[1], self.attack_range[2], self.attack_range[3])
@@ -188,7 +193,8 @@ class Character:
                 self.dx = 0
 
         # 슬라이딩
-        elif (e.key, e.type) == (SDLK_SPACE, SDL_KEYDOWN) and self.state not in SLIDE_EXCEPTION and 'jump' not in self.subState:
+        elif (e.key, e.type) == (
+        SDLK_SPACE, SDL_KEYDOWN) and self.state not in SLIDE_EXCEPTION and 'jump' not in self.subState:
             if self.leftKeyDown:
                 self.state = 'slide'
                 self.frame, self.timer = 0, 0
@@ -207,18 +213,23 @@ class Character:
                 self.interaction_handler(interaction_result)
 
         # 기본공격 1타
-        elif ((e.key, e.type) == (SDLK_x, SDL_KEYDOWN) or self.attackKeyDown) and self.state not in ATTACK1_EXCEPTION and self.subState == 'none':
+        elif ((e.key, e.type) == (
+        SDLK_x, SDL_KEYDOWN) or self.attackKeyDown) and self.state not in ATTACK1_EXCEPTION and self.subState == 'none':
             self.state = 'attack1'
             self.frame, self.dx = 0, 0
             self.attackKeyDown = True
 
         # 기본공격 2타
-        elif ((e.key, e.type) == (SDLK_x, SDL_KEYDOWN) or self.attackKeyDown) and self.state == 'attack1' and self.frame >= (self.MOTION_FRAME['attack1'] - 0.8) * self.MOTION_DELAY['attack1']:
+        elif ((e.key, e.type) == (
+        SDLK_x, SDL_KEYDOWN) or self.attackKeyDown) and self.state == 'attack1' and self.frame >= (
+                self.MOTION_FRAME['attack1'] - 0.8) * self.MOTION_DELAY['attack1']:
             self.state = 'attack2'
             self.frame = 0
 
         # 기본공격 3타
-        elif ((e.key, e.type) == (SDLK_x, SDL_KEYDOWN) or self.attackKeyDown) and self.state == 'attack2' and self.frame >= (self.MOTION_FRAME['attack2'] - 2) * self.MOTION_DELAY['attack2']:
+        elif ((e.key, e.type) == (
+        SDLK_x, SDL_KEYDOWN) or self.attackKeyDown) and self.state == 'attack2' and self.frame >= (
+                self.MOTION_FRAME['attack2'] - 2) * self.MOTION_DELAY['attack2']:
             self.state = 'attack3'
             self.frame = 0
 
@@ -235,7 +246,7 @@ class Character:
         # 위치 재설정
         if (e.key, e.type) == (SDLK_r, SDL_KEYDOWN) and self.onlyOnce.get(str(Ingame_state.map.id) + '_reset') == None:
             map = Ingame_state.map
-            self.onlyOnce.update( { str(map.id) + '_reset' : True } )
+            self.onlyOnce.update({str(map.id) + '_reset': True})
             self.x, self.y = self.onlyOnce.get(str(map.id))
             UI.addString([400, 312], '위치를 재설정했습니다.', (255, 255, 255), 5, 0.01)
             UI.addString([400, 300], '이 방에서 다시 위치를 재설정 할 수 없습니다.', (255, 255, 255), 5, 0.01)
@@ -257,25 +268,25 @@ class Character:
                 self.relicGainPos.append((Ingame_state.map.id, *pos))
                 Relic.addRandomRelic()
                 Relic.updateChrStat()
-                
+
         # 표지판
         elif objType == (1, 0):
             UI.addString([self.x, self.y], obj[6], (255, 255, 255), 2, 0.05)
 
     def collideCheck(self):
         map = Ingame_state.map
-        cLeft  = min(self.hitBox[0], self.hitBox[2])
+        cLeft = min(self.hitBox[0], self.hitBox[2])
         cRight = max(self.hitBox[0], self.hitBox[2])
-        cTop   = max(self.hitBox[1], self.hitBox[3])
-        cBot   = min(self.hitBox[1], self.hitBox[3])
+        cTop = max(self.hitBox[1], self.hitBox[3])
+        cBot = min(self.hitBox[1], self.hitBox[3])
 
         if self.subState == 'none':
             MOTION_HITBOX = self.MOTION_HITBOX[self.state]
         else:
             MOTION_HITBOX = self.MOTION_HITBOX[self.subState]
         cFront = abs(MOTION_HITBOX[0])
-        cBack  = abs(MOTION_HITBOX[2])
-        cUp    = abs(MOTION_HITBOX[1])
+        cBack = abs(MOTION_HITBOX[2])
+        cUp = abs(MOTION_HITBOX[1])
         cWidth = abs(MOTION_HITBOX[0]) + abs(MOTION_HITBOX[2])
 
         for tile in map.tileRect:
@@ -284,17 +295,17 @@ class Character:
 
             # 머리 충돌
             if (tLeft < cLeft < tRight or tLeft < cRight < tRight) and \
-                tBot <= cTop + self.dy <= tTop != tBot:
+                    tBot <= cTop + self.dy <= tTop != tBot:
                 RESULT = True, RESULT[1], tBot - cUp, RESULT[3], 0
 
             # 좌측 충돌
             if (tBot < cTop < tTop or tBot < cBot < tTop) and \
-                (cLeft + self.dx <= tRight <= cLeft or tLeft < cLeft + self.dx < tRight):
+                    (cLeft + self.dx <= tRight <= cLeft or tLeft < cLeft + self.dx < tRight):
                 RESULT = True, tRight + cBack, self.y, 0, RESULT[4]
 
             # 우측 충돌
             if (tBot < cTop < tTop or tBot < cBot < tTop) and \
-                (cRight <= tLeft <= cRight + self.dx or tLeft < cRight + self.dx < tRight):
+                    (cRight <= tLeft <= cRight + self.dx or tLeft < cRight + self.dx < tRight):
                 RESULT = True, tLeft - cBack, self.y, 0, RESULT[4]
 
             # 맵 밖으로 못나가게
@@ -310,9 +321,9 @@ class Character:
 
     def landingCheck(self):
         map = Ingame_state.map
-        cLeft  = min(self.hitBox[0], self.hitBox[2])
+        cLeft = min(self.hitBox[0], self.hitBox[2])
         cRight = max(self.hitBox[0], self.hitBox[2])
-        cBot   = min(self.hitBox[1], self.hitBox[3])
+        cBot = min(self.hitBox[1], self.hitBox[3])
 
         for tile in map.tileRect:
             tLeft, tTop, tRight, tBot = tile
@@ -321,7 +332,7 @@ class Character:
             # 1. 히트박스의 좌, 우 중에 하나라도 해당 지형의 폭 사이에 있어야한다.
             # 2. 히트박스의 하단 + dy <= 지형의 상단 <= 히트박스의 하단이여야한다.
             if (tLeft < cLeft < tRight or tLeft < cRight < tRight) and \
-                cBot + self.dy <= tTop <= cBot:
+                    cBot + self.dy <= tTop <= cBot:
                 return True, tTop + abs(self.MOTION_HITBOX[self.state][3])
         return False, None
 
@@ -329,22 +340,22 @@ class Character:
         map = Ingame_state.map
         mob = Ingame_state.mob
 
-        left  = min(self.hitBox[0], self.hitBox[2])
+        left = min(self.hitBox[0], self.hitBox[2])
         right = max(self.hitBox[0], self.hitBox[2])
-        top   = max(self.hitBox[1], self.hitBox[3])
-        bot   = min(self.hitBox[1], self.hitBox[3])
+        top = max(self.hitBox[1], self.hitBox[3])
+        bot = min(self.hitBox[1], self.hitBox[3])
 
         for portal in map.portalRect:
             isCrash = False
 
-            pLeft  = min(portal[0], portal[2])
+            pLeft = min(portal[0], portal[2])
             pRight = max(portal[0], portal[2])
-            pTop   = max(portal[1], portal[3])
-            pBot   = min(portal[1], portal[3])
+            pTop = max(portal[1], portal[3])
+            pBot = min(portal[1], portal[3])
 
-            if pLeft <= left  <= pRight and pBot <= top <= pTop: isCrash = True
+            if pLeft <= left <= pRight and pBot <= top <= pTop: isCrash = True
             if pLeft <= right <= pRight and pBot <= top <= pTop: isCrash = True
-            if pLeft <= left  <= pRight and pBot <= bot <= pBot: isCrash = True
+            if pLeft <= left <= pRight and pBot <= bot <= pBot: isCrash = True
             if pLeft <= right <= pRight and pBot <= bot <= pBot: isCrash = True
 
             if isCrash:
@@ -438,8 +449,8 @@ class Character:
         # 슬라이드
         elif self.state == 'slide':
             # update Cycle
-            self.timer += delta_time
-            if self.timer > delta_time * 6:
+            self.timer += Base.FRAME_SLEEP_TIME
+            if self.timer > Base.FRAME_SLEEP_TIME * 6.5:
                 if self.dir == 'LEFT' and self.dx < 0:
                     self.dx += 1
                 elif self.dir == 'RIGHT' and self.dx > 0:
@@ -472,11 +483,10 @@ class Character:
         # 점프
         if 'jump' in self.subState:
             # update Cycle
-            self.timer += delta_time
-            if self.timer > delta_time * 5:
-                if self.dy > -10:
-                    self.dy -= 2
-                    self.timer = 0
+            self.timer += Base.FRAME_SLEEP_TIME
+            if self.timer > Base.FRAME_SLEEP_TIME * 5.5 and self.dy > -10:
+                self.dy -= 2
+                self.timer = 0
 
             # Frame Fix
             if self.frame > (self.MOTION_FRAME['jump'] - 1) * self.MOTION_DELAY['jump']:
@@ -510,24 +520,6 @@ class Character:
             if y: self.y = y
             self.dx, self.dy = dx, dy
 
-        # # 버그 캐치
-        # if self.y < -50:
-        #     mob = Ingame_state.mob
-        #     map = Ingame_state.map
-        #
-        #     # 리스트 초기화
-        #     mob.clear()
-        #     map.tileRect.clear()
-        #     map.portalRect.clear()
-        #     map.objectRect.clear()
-        #
-        #     # 맵 로드
-        #     map.id = map.id // 100 * 100
-        #     map.load()
-        #
-        #     # 캐릭터 세팅
-        #     self.x, self.y, self.dx, self.dy = x, y, 0, 0
-
         # Chr Pos Update
         self.x += self.dx
         self.y += self.dy
@@ -549,17 +541,22 @@ class Character:
     def updateAttackRange(self):
         self.attack_range = (0, 0, 0, 0)
 
-        if (self.state == 'attack1' and self.MOTION_DELAY[self.state] * 2.5 < self.frame < self.MOTION_DELAY[self.state] * 3) or \
-           (self.state == 'attack2' and self.MOTION_DELAY[self.state] * 3   < self.frame < self.MOTION_DELAY[self.state] * 4) or \
-           (self.state == 'attack3' and self.MOTION_DELAY['attack3']  * 2    < self.frame < self.MOTION_DELAY['attack3'] * 4) or \
-           (self.state == 'air_attack1') or \
-           (self.state == 'air_attack2' and self.frame < self.MOTION_DELAY[self.state] * 2):
+        if (self.state == 'attack1' and self.MOTION_DELAY[self.state] * 2.5 < self.frame < self.MOTION_DELAY[
+            self.state] * 3) or \
+                (self.state == 'attack2' and self.MOTION_DELAY[self.state] * 3 < self.frame < self.MOTION_DELAY[
+                    self.state] * 4) or \
+                (self.state == 'attack3' and self.MOTION_DELAY['attack3'] * 2 < self.frame < self.MOTION_DELAY[
+                    'attack3'] * 4) or \
+                (self.state == 'air_attack1') or \
+                (self.state == 'air_attack2' and self.frame < self.MOTION_DELAY[self.state] * 2):
             if self.dir == 'RIGHT':
-                self.attack_range = (self.x + self.MOTION_ATTACK_RANGE[self.state][0], self.y + self.MOTION_ATTACK_RANGE[self.state][1],
-                                     self.x + self.MOTION_ATTACK_RANGE[self.state][2], self.y + self.MOTION_ATTACK_RANGE[self.state][3])
+                self.attack_range = (
+                self.x + self.MOTION_ATTACK_RANGE[self.state][0], self.y + self.MOTION_ATTACK_RANGE[self.state][1],
+                self.x + self.MOTION_ATTACK_RANGE[self.state][2], self.y + self.MOTION_ATTACK_RANGE[self.state][3])
             else:
-                self.attack_range = (self.x - self.MOTION_ATTACK_RANGE[self.state][0], self.y + self.MOTION_ATTACK_RANGE[self.state][1],
-                                     self.x - self.MOTION_ATTACK_RANGE[self.state][2], self.y + self.MOTION_ATTACK_RANGE[self.state][3])
+                self.attack_range = (
+                self.x - self.MOTION_ATTACK_RANGE[self.state][0], self.y + self.MOTION_ATTACK_RANGE[self.state][1],
+                self.x - self.MOTION_ATTACK_RANGE[self.state][2], self.y + self.MOTION_ATTACK_RANGE[self.state][3])
 
     def update(self, delta_time):
         # 위치 업데이트
@@ -575,48 +572,48 @@ class Character:
         # 공격범위 업데이트
         self.updateAttackRange()
 
-    def saveTravelData(self):
+    def saveTravelData(self, clear):
         data = []
 
         # 이미 도전 기록이 있다면 데이터를 불러옴
         try:
-            with open('../res/Chr/travel.json', 'r', encoding="utf-8") as f:
+            with open('res/Chr/travel.json', 'r', encoding="utf-8") as f:
                 data = json.load(f)
         except:
             pass
 
         result = {}
-        relic  = []
+        relic = []
 
         # 결과
-        result.update({'clear' : False})
+        result.update({'clear': clear})
 
         # 시간
         import time
         localTime = time.localtime()
-        year      = localTime.tm_year
-        month     = localTime.tm_mon
-        day       = localTime.tm_mday
-        hour      = localTime.tm_hour
-        min       = localTime.tm_min
+        year = localTime.tm_year
+        month = localTime.tm_mon
+        day = localTime.tm_mday
+        hour = localTime.tm_hour
+        min = localTime.tm_min
 
-        endTime = str(year) + '년 ' + str(month) + '월 ' + str(day) + '일 ' + \
-            str(hour) + '시 ' + str(min) + '분'
+        endTime = str(year) + '년' + str(month) + '월' + str(day) + '일' + \
+                  str(hour) + '시' + str(min) + '분'
 
-        result.update({'time' : endTime})
+        result.update({'time': endTime})
 
         # 죽은곳
         deadPlace = Ingame_state.map.id // 100
-        result.update({'pos' : '지하 ' + str(deadPlace) + '층'})
+        result.update({'pos': '지하 ' + str(deadPlace) + '층'})
 
         # 유물
         for r in self.relic:
-            relic.append({'id' : r.id,
-                        'name' : r.name})
+            relic.append({'id': r.id,
+                          'name': r.name})
 
         # 합치기
-        result.update({'relic' : relic})
+        result.update({'relic': relic})
         data.append(result)
 
-        with open('../res/Chr/travel.json', 'w', encoding="utf-8") as make_file:
+        with open('res/Chr/travel.json', 'w', encoding="utf-8") as make_file:
             json.dump(data, make_file, ensure_ascii=False, indent="\t")

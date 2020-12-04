@@ -30,7 +30,7 @@ class Explosion:
             draw_rectangle(*self.attackRange)
 
         try:
-            image = DataManager.load('../res/Effect/Frames/1_' + str(self.frame) + '.png')
+            image = DataManager.load('res/Effect/Frames/1_' + str(self.frame) + '.png')
             image.draw(self.x, self.y, image.w * self.mag, image.h * self.mag)
         except:
             pass
@@ -84,7 +84,7 @@ class Explosion:
             return HIT and chr.state != 'die' and chr.invincible_time <= 0
 
         if check():
-            Damage_Parser.mob_attack_chr(self, chr)
+            Damage_Parser.mob_attack_chr(self, chr, True)
 
 class Thunder:
     def __init__(self, pos, mag, dmg, time):
@@ -100,7 +100,7 @@ class Thunder:
             draw_rectangle(*self.attackRange)
 
         try:
-            image = DataManager.load('../res/Effect/Thunder/' + str(self.frame) + '.png')
+            image = DataManager.load('res/Effect/Thunder/' + str(self.frame) + '.png')
             image.draw(self.x, self.y, image.w * self.mag, image.h * self.mag)
         except:
             pass
@@ -129,6 +129,9 @@ class Thunder:
             cTop   = max(chr.hitBox[1], chr.hitBox[3])
             cBot   = min(chr.hitBox[1], chr.hitBox[3])
 
+            cCenterX = (cLeft + cRight) / 2
+            cCenterY = (cTop + cBot) / 2
+
             mLeft  = min(self.attackRange[0], self.attackRange[2])
             mRight = max(self.attackRange[0], self.attackRange[2])
             mTop   = max(self.attackRange[1], self.attackRange[3])
@@ -151,10 +154,13 @@ class Thunder:
                 (cBot < mTop < cTop or cBot < mBot < cTop):
                 HIT = True
 
+            # 캐릭터의 중점이 공격범위 안에 있는 경우
+            if mLeft < cCenterX < mRight and mBot < cCenterY < mTop: HIT = True
+
             return HIT and chr.state != 'die' and chr.invincible_time <= 0
 
         if check():
-            Damage_Parser.mob_attack_chr(self, chr)
+            Damage_Parser.mob_attack_chr(self, chr, True)
 
 class Meteor:
     def __init__(self, pos, mag, dmg, time, dy):
@@ -170,7 +176,7 @@ class Meteor:
 
     def draw(self):
         try:
-            image = DataManager.load('../res/Effect/Fire/1_' + str(self.frame) + '.png')
+            image = DataManager.load('res/Effect/Fire/1_' + str(self.frame) + '.png')
             image.draw(self.x, self.y, image.w * self.mag, image.h * self.mag)
         except:
             pass
@@ -228,7 +234,7 @@ class Meteor:
             return HIT and chr.state != 'die' and chr.invincible_time <= 0
 
         if check():
-            Damage_Parser.mob_attack_chr(self, chr)
+            Damage_Parser.mob_attack_chr(self, chr, True)
 
 class Fireball:
     def __init__(self, pos, mag, dmg, time, dx):
@@ -243,7 +249,7 @@ class Fireball:
 
     def draw(self):
         try:
-            image = DataManager.load('../res/Effect/Fireball/1_' + str(self.frame) + '.png')
+            image = DataManager.load('res/Effect/Fireball/1_' + str(self.frame) + '.png')
 
             if self.dx > 0:
                 image.draw(self.x, self.y, image.w * self.mag, image.h * self.mag)
@@ -307,4 +313,4 @@ class Fireball:
             return HIT and chr.state != 'die' and chr.invincible_time <= 0
 
         if check():
-            Damage_Parser.mob_attack_chr(self, chr)
+            Damage_Parser.mob_attack_chr(self, chr, True)

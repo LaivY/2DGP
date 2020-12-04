@@ -18,7 +18,7 @@ def chr_attack_mob(mob, chr, dmg=-1):
             else:
                 r.stack += 1
         # 수리검
-        elif r.id == 205:
+        elif r.id == 205 and r.stack <= 14:
             r.stack += 1
 
     # 치명타
@@ -64,19 +64,19 @@ def chr_attack_mob(mob, chr, dmg=-1):
             elif r.id == 200 and r.isActive:
                 chr_hp_recovery(chr, 12)
 
-    FRAMEWORK.DataManager.load('../res/Sound/SOTE_SFX_FastAtk_v2.wav').play()
+    FRAMEWORK.DataManager.load('res/Sound/SOTE_SFX_FastAtk_v2.wav').play()
     Relic.updataRelicStack()
     Relic.updateChrStat()
 
-def mob_attack_chr(mob, chr):
+def mob_attack_chr(mob, chr, isProjectile=False):
     _dmg = mob.ad - chr.df
 
     for r in chr.relic:
         # 청동 비늘
-        if r.id == 103:
+        if r.id == 103 and not isProjectile:
             chr_attack_mob(mob, chr, 3)
         # 표창
-        elif r.id == 206:
+        elif r.id == 206 and r.stack <= 14:
             r.stack += 1
         # 토리이
         elif r.id == 305 and 1 <= _dmg <= 5:
@@ -117,7 +117,7 @@ def mob_attack_chr(mob, chr):
         chr.state = 'die'
         chr.dx, chr.hp = 0, 0
 
-    FRAMEWORK.DataManager.load('../res/Sound/SOTE_SFX_FastAtk_v2.wav').play()
+    FRAMEWORK.DataManager.load('res/Sound/SOTE_SFX_FastAtk_v2.wav').play()
     Relic.updataRelicStack()
     Relic.updateChrStat()
 
@@ -133,6 +133,6 @@ def chr_hp_recovery(chr, amount):
     chr.hp = min(chr.hp, chr.maxHP)
     UI.addString([chr.x, chr.y], str(round(_amount)), (50, 255, 50), 0.5, 0.1, 12)
 
-    FRAMEWORK.DataManager.load('../res/Sound/SOTE_SFX_HealShort_1_v2.wav').play()
+    FRAMEWORK.DataManager.load('res/Sound/SOTE_SFX_HealShort_1_v2.wav').play()
     Relic.updataRelicStack()
     Relic.updateChrStat()

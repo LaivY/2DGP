@@ -9,13 +9,13 @@ FONT = {}
 
 def load():
     global relic_image
-    relic_image = DataManager.load('../res/Item/relic.png')
-    CHR_INFO_IMAGE['base'] = DataManager.load('../res/UI/Ingame/CHR_INFO_BASE.png')
-    CHR_INFO_IMAGE['hpbar'] = DataManager.load('../res/UI/Ingame/CHR_HP_BAR.png')
-    CHR_INFO_IMAGE['ad'] = DataManager.load('../res/UI/Ingame/ad.png')
-    CHR_INFO_IMAGE['as'] = DataManager.load('../res/UI/Ingame/as.png')
-    CHR_INFO_IMAGE['cri'] = DataManager.load('../res/UI/Ingame/cri.png')
-    CHR_INFO_IMAGE['df'] = DataManager.load('../res/UI/Ingame/df.png')
+    relic_image = DataManager.load('res/Item/relic.png')
+    CHR_INFO_IMAGE['base'] = DataManager.load('res/UI/Ingame/CHR_INFO_BASE.png')
+    CHR_INFO_IMAGE['hpbar'] = DataManager.load('res/UI/Ingame/CHR_HP_BAR.png')
+    CHR_INFO_IMAGE['ad'] = DataManager.load('res/UI/Ingame/ad.png')
+    CHR_INFO_IMAGE['as'] = DataManager.load('res/UI/Ingame/as.png')
+    CHR_INFO_IMAGE['cri'] = DataManager.load('res/UI/Ingame/cri.png')
+    CHR_INFO_IMAGE['df'] = DataManager.load('res/UI/Ingame/df.png')
 
 def draw():
     drawRelic()
@@ -70,7 +70,7 @@ def drawChrInfo():
 
     # 방어력
     CHR_INFO_IMAGE['df'].draw(141, 24)
-    FONT['12'].draw(152, 23, str(chr.df), (255, 255, 255))
+    FONT['12'].draw(150, 23, str(chr.df), (255, 255, 255))
 
 def drawChrInfoDesc():
     chr = Ingame_state.chr
@@ -110,7 +110,7 @@ def printStringData():
 
         FONT[str(size)].draw(x - (cx / 5), y + cy, text, color)
         i[0][1] += dy
-        i[3]    -= Base.delta_time
+        i[3]    -= Base.FRAME_SLEEP_TIME
 
         if time <= 0: STRING_DATA_TO_PRINT.remove(i)
 
